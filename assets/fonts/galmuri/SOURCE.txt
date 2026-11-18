@@ -1,0 +1,4 @@
+https://github.com/quiple/galmuri
+Commit: 71e1cacf1437a11220307120e63e30bc275312d4
+Downloaded: 2026-10-16
+Unmodified font binaries; SIL Open Font License 1.1 (LICENSE.txt).

@@ -1,0 +1,439 @@
+'use strict';
+// Generated from manmul/basic-data.json for file:// browsers.
+globalThis.ManmulBasicData={
+  "N001": {
+    "mark": null,
+    "kind": "single"
+  },
+  "N002": {
+    "mark": null,
+    "kind": "single"
+  },
+  "N003": {
+    "mark": null,
+    "kind": "single"
+  },
+  "N004": {
+    "mark": null,
+    "kind": "single"
+  },
+  "N005": {
+    "mark": null,
+    "kind": "single"
+  },
+  "N006": {
+    "mark": null,
+    "kind": "single"
+  },
+  "N007": {
+    "mark": null,
+    "kind": "single"
+  },
+  "M001": {
+    "mark": "열기",
+    "kind": "single"
+  },
+  "M002": {
+    "mark": null,
+    "kind": "single"
+  },
+  "M003": {
+    "mark": null,
+    "kind": "single"
+  },
+  "M004": {
+    "mark": null,
+    "kind": "single"
+  },
+  "M005": {
+    "mark": "균열",
+    "kind": "single"
+  },
+  "M006": {
+    "mark": null,
+    "kind": "single"
+  },
+  "M007": {
+    "mark": null,
+    "kind": "single"
+  },
+  "M008": {
+    "mark": null,
+    "kind": "single"
+  },
+  "M009": {
+    "mark": null,
+    "kind": "single"
+  },
+  "M010": {
+    "mark": "냉기",
+    "kind": "single"
+  },
+  "M011": {
+    "mark": null,
+    "kind": "single"
+  },
+  "M012": {
+    "mark": null,
+    "kind": "single"
+  },
+  "M013": {
+    "mark": null,
+    "kind": "single"
+  },
+  "M014": {
+    "mark": "열기",
+    "kind": "single"
+  },
+  "M015": {
+    "mark": null,
+    "kind": "single"
+  },
+  "M016": {
+    "mark": null,
+    "kind": "single"
+  },
+  "M017": {
+    "mark": null,
+    "kind": "single"
+  },
+  "M018": {
+    "mark": null,
+    "kind": "single"
+  },
+  "M019": {
+    "mark": null,
+    "kind": "single"
+  },
+  "M020": {
+    "mark": null,
+    "kind": "single"
+  },
+  "M021": {
+    "mark": null,
+    "kind": "single"
+  },
+  "M022": {
+    "mark": null,
+    "kind": "single"
+  },
+  "M023": {
+    "mark": null,
+    "kind": "single"
+  },
+  "M024": {
+    "mark": "젖음",
+    "kind": "multi",
+    "count": 2,
+    "factor": 1,
+    "markMulti": true
+  },
+  "M025": {
+    "mark": "포자",
+    "kind": "single"
+  },
+  "M026": {
+    "mark": null,
+    "kind": "single"
+  },
+  "M027": {
+    "mark": "젖음",
+    "kind": "multi",
+    "count": 2,
+    "factor": 1,
+    "markMulti": true
+  },
+  "R001": {
+    "mark": null,
+    "kind": "single"
+  },
+  "R002": {
+    "mark": "냉기",
+    "kind": "slow",
+    "amount": 0.12,
+    "duration": 2
+  },
+  "R003": {
+    "mark": null,
+    "kind": "single"
+  },
+  "R004": {
+    "mark": null,
+    "kind": "pierce",
+    "factor": 1
+  },
+  "R005": {
+    "mark": null,
+    "kind": "single"
+  },
+  "R006": {
+    "mark": "균열",
+    "kind": "single"
+  },
+  "R007": {
+    "mark": null,
+    "kind": "chain",
+    "factor": 1,
+    "element": "번개",
+    "chainElement": true
+  },
+  "R008": {
+    "mark": "젖음",
+    "kind": "pierce",
+    "factor": 1,
+    "markPierced": true
+  },
+  "R009": {
+    "mark": "젖음",
+    "kind": "slow",
+    "amount": 0.12,
+    "duration": 2
+  },
+  "R010": {
+    "mark": "냉기",
+    "kind": "slow",
+    "amount": 0.12,
+    "duration": 2
+  },
+  "R011": {
+    "mark": null,
+    "kind": "dot",
+    "factor": 0.05,
+    "duration": 3
+  },
+  "R012": {
+    "mark": null,
+    "kind": "single"
+  },
+  "R013": {
+    "mark": null,
+    "kind": "root",
+    "duration": 0.3
+  },
+  "R014": {
+    "mark": "포자",
+    "kind": "dot",
+    "factor": 0.04,
+    "duration": 3,
+    "dotType": "poison"
+  },
+  "R015": {
+    "mark": null,
+    "kind": "single"
+  },
+  "R016": {
+    "mark": null,
+    "kind": "slow",
+    "amount": 0.12,
+    "duration": 2
+  },
+  "R017": {
+    "mark": null,
+    "kind": "single"
+  },
+  "R018": {
+    "mark": null,
+    "kind": "dot",
+    "factor": 0.04,
+    "duration": 3,
+    "dotType": "poison"
+  },
+  "R019": {
+    "mark": null,
+    "kind": "slow",
+    "amount": 0.12,
+    "duration": 2
+  },
+  "R020": {
+    "mark": null,
+    "kind": "vulnerability",
+    "amount": 0.04,
+    "duration": 3
+  },
+  "R021": {
+    "mark": null,
+    "kind": "chain",
+    "factor": 1
+  },
+  "R022": {
+    "mark": "젖음",
+    "kind": "pierce",
+    "factor": 1,
+    "markPierced": true
+  },
+  "R023": {
+    "mark": "포자",
+    "kind": "root",
+    "duration": 0.3
+  },
+  "R024": {
+    "mark": null,
+    "kind": "periodic_bonus",
+    "factor": 0.6,
+    "interval": 3,
+    "bonusSelect": "nearest",
+    "bonusElement": "금속"
+  },
+  "R025": {
+    "mark": "표적",
+    "kind": "pierce",
+    "factor": 1,
+    "markPierced": true
+  },
+  "R026": {
+    "mark": null,
+    "kind": "single"
+  },
+  "R027": {
+    "mark": null,
+    "kind": "single"
+  },
+  "R028": {
+    "mark": "포자",
+    "kind": "dot",
+    "factor": 0.04,
+    "duration": 3,
+    "dotType": "poison"
+  },
+  "R029": {
+    "mark": null,
+    "kind": "single"
+  },
+  "R030": {
+    "mark": null,
+    "kind": "single"
+  },
+  "R031": {
+    "mark": null,
+    "kind": "single"
+  },
+  "R032": {
+    "mark": null,
+    "kind": "speed_aura",
+    "amount": 0.03,
+    "radius": 3
+  },
+  "R033": {
+    "mark": "젖음",
+    "kind": "splash",
+    "factor": 0.7,
+    "markSplash": true
+  },
+  "R034": {
+    "mark": null,
+    "kind": "single"
+  },
+  "R035": {
+    "mark": null,
+    "kind": "pierce",
+    "factor": 1
+  },
+  "R036": {
+    "mark": null,
+    "kind": "vulnerability",
+    "amount": 0.04,
+    "duration": 3
+  },
+  "R037": {
+    "mark": null,
+    "kind": "splash",
+    "factor": 0.7
+  },
+  "R038": {
+    "mark": null,
+    "kind": "vulnerability",
+    "amount": 0.04,
+    "duration": 3
+  },
+  "R039": {
+    "mark": null,
+    "kind": "chain",
+    "factor": 1
+  },
+  "R040": {
+    "mark": "젖음",
+    "kind": "slow",
+    "amount": 0.12,
+    "duration": 2
+  },
+  "R041": {
+    "mark": null,
+    "kind": "chain",
+    "factor": 1
+  },
+  "R042": {
+    "mark": null,
+    "kind": "dot",
+    "factor": 0.05,
+    "duration": 3
+  },
+  "R043": {
+    "mark": null,
+    "kind": "dot",
+    "factor": 0.05,
+    "duration": 3
+  },
+  "R044": {
+    "mark": null,
+    "kind": "single"
+  },
+  "R045": {
+    "mark": null,
+    "kind": "single"
+  },
+  "R046": {
+    "mark": null,
+    "kind": "double",
+    "factor": 0.5
+  },
+  "R047": {
+    "mark": null,
+    "kind": "single"
+  },
+  "R048": {
+    "mark": null,
+    "kind": "single"
+  },
+  "R049": {
+    "mark": null,
+    "kind": "single"
+  },
+  "R050": {
+    "mark": null,
+    "kind": "double",
+    "factor": 0.5
+  },
+  "R051": {
+    "mark": null,
+    "kind": "single"
+  },
+  "R052": {
+    "mark": null,
+    "kind": "single"
+  },
+  "R053": {
+    "mark": null,
+    "kind": "single"
+  },
+  "R054": {
+    "mark": "균열",
+    "kind": "single"
+  },
+  "R055": {
+    "mark": null,
+    "kind": "single"
+  },
+  "R056": {
+    "mark": null,
+    "kind": "single"
+  },
+  "R057": {
+    "mark": null,
+    "kind": "splash",
+    "factor": 0.7
+  },
+  "R058": {
+    "mark": "젖음",
+    "kind": "single"
+  }
+};

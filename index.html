@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>균열 수호대 — 전투 원형</title>
+<link rel="stylesheet" href="lobby.css">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0c1822;color:#eef6ed;font:14px 'Malgun Gothic',sans-serif;overflow:hidden}canvas{display:block;width:100vw;height:100vh;touch-action:none}.overlay{position:absolute;pointer-events:none}.panel{pointer-events:auto;background:#142735e8;border:1px solid #9fc4bd55;border-radius:12px;box-shadow:0 8px 30px #0005;padding:12px 16px}.top{top:16px;left:50%;transform:translateX(-50%);display:flex;gap:22px;white-space:nowrap}.danger,.stat-reduced{color:#ff7777}.help{top:16px;left:16px;line-height:1.7;color:#d1ded8}.actions{pointer-events:auto;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:8px;white-space:nowrap}.selected{bottom:82px;left:50%;transform:translateX(-50%);min-width:300px;text-align:center}.unit-header{display:flex;justify-content:space-between;gap:16px;align-items:baseline;margin-bottom:8px;text-align:left}.unit-identity{display:flex;flex-direction:column;gap:2px}.unit-title{color:#b7c9c1;font-size:11px;font-weight:normal}.unit-affiliation,.unit-section-label{color:#b7c9c1;font-size:11px}.unit-info{display:flex;gap:24px;text-align:left}.unit-stats{min-width:155px}.unit-stats>div{display:flex;justify-content:space-between;gap:18px;line-height:1.7}.unit-stats span{color:#b7c9c1}.unit-skills{min-width:130px}.skill-list{display:flex;gap:6px;margin-top:4px}.skill-wrap{position:relative;display:inline-block}.skill-icon{width:34px;height:34px;padding:0;background:#31584e;font-weight:bold}.skill-tip{display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);width:250px;padding:10px;background:#101c24ef;border:1px solid #9fc4bd77;border-radius:8px;box-shadow:0 5px 18px #0008;font-size:12px;line-height:1.6;color:#edf5ec;pointer-events:none;z-index:3}.skill-wrap:hover .skill-tip,.skill-wrap:focus-within .skill-tip{display:block}.skill-pending{color:#ffc18d}.unit-recipes{text-align:center}.unit-recipes:empty{display:none}.right{top:16px;right:16px;text-align:right}.speed-row{margin-top:6px}.target-modes{display:flex;gap:4px;margin-top:8px;justify-content:center}.target-modes button{font-size:11px;padding:5px 7px}.target-modes button[aria-pressed="true"]{background:#7aa88f;color:#10251d;border-color:#b8e2c7}.goal-tracker{top:74px;right:16px;width:260px;max-height:495px;overflow:auto;font-size:12px;line-height:1.5}.goal-tracker .goal-row{display:flex;align-items:center;gap:5px;padding:2px 0}.goal-portrait{width:20px!important;height:20px!important;font-size:10px}.goal-tracker button{padding:3px 8px}.boss-preview{top:92px;left:50%;transform:translateX(-50%);max-width:490px;text-align:center;border-color:#dfbd78;background:#2c2634ed}.boss-preview button{padding:4px 10px}.boss-preview strong{color:#ffe4a2}.modal{inset:0;display:flex;align-items:center;justify-content:center;background:#0009;pointer-events:auto}.modal-close{position:sticky;top:0;float:right;z-index:2;width:34px;height:34px;padding:0;font-size:22px;line-height:1;background:#263f47}.faction-tabs{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}.faction-tab{font-size:11px;padding:5px 7px}.faction-tab[aria-pressed="true"]{background:#7aa88f;color:#10251d;border-color:#b8e2c7}.reward-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.reward-list button{text-align:left;padding:6px}.modal .panel{width:min(520px,1440px);max-height:720px;overflow:auto;line-height:1.8}.hidden{display:none}button{font:inherit;color:#eef6ed;background:#31584e;border:1px solid #7aa69a;border-radius:7px;padding:9px 14px;cursor:pointer}button:hover{background:#467b6d}button:disabled{opacity:.45;cursor:default}h2,h3,p{margin:4px 0 9px}.muted{color:#b7c9c1}.portrait{width:46px;height:46px;padding:0;border-radius:50%;font-weight:bold;font-size:16px;margin:5px 4px 0;color:#15231d}.portrait.is-unavailable{filter:grayscale(1);opacity:.6}.portrait:disabled{opacity:.4}.portrait-wrap{display:inline-block;position:relative}.recipe-tip{display:none;position:absolute;bottom:calc(100% + 9px);left:50%;transform:translateX(-50%);width:max-content;max-width:260px;white-space:normal;text-align:left;padding:9px 12px;border-radius:8px;background:#101c24e8;border:1px solid #9fc4bd77;box-shadow:0 5px 18px #0008;color:#edf5ec;font-size:12px;line-height:1.6;pointer-events:none}.recipe-ability{display:block;margin:3px 0 7px;color:#c9d9d0}.ingredient-heading{display:block;margin-bottom:4px;color:#a9bbb2;font-size:11px}.ingredient-row{display:flex;align-items:center;gap:7px;min-width:190px;margin:4px 0}.ingredient-portrait{display:inline-flex;align-items:center;justify-content:center;flex:none;width:25px;height:25px;border-radius:50%;color:#15231d;font-weight:bold}.ingredient-name{flex:1;white-space:nowrap}.ingredient-count{white-space:nowrap;font-size:11px}.is-owned{color:#a9d8b5}.is-missing{color:#ff9d91}.portrait-wrap:hover .recipe-tip,.portrait-wrap:focus-within .recipe-tip{display:block}.toast{z-index:10;top:64px;left:50%;transform:translateX(-50%);white-space:nowrap;color:#ffe49a;text-shadow:0 2px 5px #000}
+.modal .panel:has(.recipe-book){width:min(1040px,1536px)}
+.recipe-book .faction-tabs{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;padding-bottom:4px}
+.recipe-book .faction-tab{flex:0 0 auto}
+.book-recipes{display:flex;flex-direction:column}
+.book-recipe{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #9fc4bd33}
+.book-formula{display:flex;align-items:center;gap:12px;flex:1;min-width:0;overflow-x:auto;padding:2px 0 5px}
+.book-result,.book-ingredient{display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;flex:0 0 105px;line-height:1.35}
+.book-result .ingredient-portrait,.book-ingredient .ingredient-portrait{width:52px;height:52px;font-size:20px}
+.book-unit-name{font-size:12px;word-break:keep-all;overflow-wrap:anywhere}
+.book-ingredients{display:flex;align-items:center;gap:8px}
+.book-plus,.book-arrow{flex:none;color:#b7c9c1;font-size:18px}
+.book-actions{display:flex;gap:5px;flex:none;white-space:nowrap}
+.book-actions button{padding:7px 9px;font-size:12px}
+.unit-sale{margin-top:6px}.unit-sale button{font-size:11px;padding:5px 9px}
+.selected{max-width:min(620px,1504px)}
+.role-tags{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 8px;text-align:left;white-space:normal}
+.role-tag{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border:1px solid #89a6a466;border-radius:5px;background:#243e46;color:#edf5ef;font-size:11px;line-height:1.3;white-space:nowrap}
+.role-tag-icon{color:#b7d7cf;font-size:11px}
+.recipe-tip .role-tags{margin:6px 0}
+.goal-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.goal-target{display:flex;align-items:center;gap:8px;padding-bottom:8px;margin-bottom:6px;border-bottom:1px solid #9fc4bd44}
+.goal-target-portrait{width:32px;height:32px;font-size:14px}
+.goal-tracker .goal-row{min-width:0;gap:6px;padding-top:3px;padding-bottom:3px}
+.goal-tracker .goal-name{flex:1;min-width:0;overflow-wrap:anywhere;line-height:1.35}
+.goal-count{flex:none;font-size:12px;font-weight:bold;white-space:nowrap}
+.goal-tracker .goal-expand{width:24px;height:24px;flex:none;padding:0;line-height:1;font-size:16px}
+.goal-expand-space{width:24px;flex:none}
+.test-controls{left:16px;bottom:18px;pointer-events:auto}
+
+
+#stage{position:absolute;left:0;top:0;width:1600px;height:900px;transform-origin:0 0;overflow:hidden;pointer-events:none}
+#stage .hub{pointer-events:auto}
+body{background:#05090c}
+</style>
+<link rel="stylesheet" href="battle-actions.css">
+<link rel="stylesheet" href="pixel-ui.css">
+<link rel="stylesheet" href="cosmetics-ui.css">
+<link rel="stylesheet" href="multiplayer.css">
+</head><body>
+<canvas id="game"></canvas>
+<div id="stage">
+<main id="lobby" class="hub" aria-label="디펜스 게임 로비">
+ <div class="hub-shell">
+  <header class="hub-top"><div class="hub-brand"><span class="hub-brand-mark">◆</span><span>DEFENSE <b>ARCHIVE</b><small>디펜스 아카이브</small></span></div><div class="hub-top-right"><button id="hubProfile" class="hub-profile" type="button" aria-label="프로필 꾸미기"></button><div class="hub-balance"><span>✦</span> 균열의 파편 <strong id="hubShards">0</strong></div></div></header>
+  <div class="hub-content"><section class="hub-main"><p class="hub-eyebrow">YOUR NEXT DEFENSE BEGINS HERE</p><h1>당신의 방어선을<br><em>선택하세요.</em></h1><p class="hub-intro">서로 다른 전장에서 나만의 전략을 완성하세요.<br>승리로 얻은 파편은 다음 전투를 위한 힘이 됩니다.</p><div class="hub-section-title"><span>01</span><h2>게임 모드</h2><small>GAME MODES</small></div>
+   <label class="difficulty-choice" for="difficultySelect">난이도 <select id="difficultySelect"><option value="easy">입문 · 50라운드</option><option value="normal" selected>일반 · 60라운드</option><option value="hard">상급 · 75라운드</option><option value="extreme">극한 · 90라운드</option></select></label>
+   <button id="startRift" type="button" class="mode-card"><span class="mode-visual" aria-hidden="true"><span class="mode-orbit orbit-one"></span><span class="mode-orbit orbit-two"></span><span class="mode-core">✦</span></span><span class="mode-copy"><span class="mode-kicker">RANDOM COMBINATION DEFENSE <i>플레이 가능</i></span><strong>균열 수호대</strong><span>소환한 원소와 사물들을 조합하고, 끊임없이 몰려오는 균열의 적을 막아내세요.</span><span class="mode-meta">싱글 플레이 <b>·</b> 랜덤 조합 <b>·</b> 50~90 라운드</span></span><span class="mode-arrow" aria-hidden="true">↗</span></button>
+   <div id="multiBox" class="multi-box" aria-label="멀티 플레이"></div>
+  </section><aside class="hub-side"><div class="hub-section-title"><span>02</span><h2>계승의 나무</h2><small>SKILL TREE</small></div><p class="hub-side-intro">균열 수호대를 클리어하면 난이도에 따라 파편을 2~8개 얻습니다. 영구 강화는 다음 전투부터 적용됩니다.</p><div id="hubSkills" class="hub-skills"></div><p id="hubMessage" class="hub-message" role="status"></p><div class="hub-record"><span>나의 기록</span><strong id="hubRecord">최고 0라운드 · 0회 승리</strong><small id="hubDifficultyRecord">일반 · 0전 0승 · 최고 0라운드</small><small>기록과 파편은 현재 브라우저에 저장됩니다.</small></div></aside></div>
+  <footer class="hub-footer"><span>DEFENSE ARCHIVE <b> / </b> 균열 수호대</span><span>BUILD YOUR DEFENSE</span></footer>
+ </div>
+ <div id="profileDialog" class="hub-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="profileDialogTitle"><div class="hub-dialog-panel"></div></div>
+</main>
+<div class="overlay panel top" aria-label="전투 현황"><span class="hud-stat hud-wave"><small id="waveLabel">진행</small><strong id="wave"></strong><span id="waveSub" class="hud-sub"></span></span><span class="hud-stat hud-gold"><small>골드</small><strong id="gold"></strong></span><span class="hud-stat hud-enemies" data-level="safe"><small>몬스터 <span class="hud-limit">/ 100</span></small><strong id="count"></strong><span class="hud-gauge" aria-hidden="true"><i id="countGauge"></i></span></span><span class="hud-stat hud-theme"><small>전장 테마</small><strong id="themeStatus" title=""></strong></span></div>
+<div class="overlay panel right" aria-label="전투 제어"><button id="rewardButton" class="hidden">✦ 보상 받기</button><button id="ticketButton" class="hidden" type="button" onclick="openTickets()">선택권 0</button><button id="supportButton" type="button" onclick="openSupport()">긴급 지원</button><button id="speed" type="button" aria-label="게임 배속 변경">X1</button><button id="menuButton" type="button" aria-label="게임 메뉴 열기">☰</button></div>
+<div id="multiBoard" class="overlay panel multi-board hidden" aria-label="멀티 현황" aria-live="off"></div>
+<div id="goalTracker" class="overlay panel goal-tracker hidden"></div>
+<div id="bossPreview" class="overlay panel boss-preview hidden"></div>
+<div id="roundBanner" class="overlay round-banner hidden" role="status" aria-live="polite"><strong id="roundBannerTitle"></strong><span id="roundBannerDetail"></span></div>
+<div id="selection" class="overlay panel selected hidden"></div>
+<div id="toast" class="overlay toast hidden" role="status" aria-live="polite"></div>
+<div class="overlay actions" aria-label="전투 행동"><span id="actionHint" class="action-hint" role="status" aria-live="polite"></span>
+ <button id="summon" class="battle-action battle-action-primary" type="button"><img src="assets/ui/battle/summon.png" alt=""><span><strong>소환</strong><small>Q · 20골드</small></span></button>
+ <button id="upgrades" class="battle-action" type="button"><img src="assets/ui/battle/upgrade.png" alt=""><span><strong>등급 강화</strong><small>W</small></span></button>
+ <button id="recipes" class="battle-action" type="button"><img src="assets/ui/battle/recipes.png" alt=""><span><strong>조합 도감</strong><small>E</small></span></button>
+ <button id="next" class="battle-action" type="button"><img src="assets/ui/battle/next.png" alt=""><span><strong>다음 스테이지</strong></span></button>
+</div>
+<div id="modal" class="overlay modal hidden"><div class="panel" id="modalContent"></div></div>
+</div>
+<script src="manmul/roster-data.js"></script><script src="manmul/model.js"></script><script src="manmul/unit-text.js"></script>
+<script src="manmul/roster.js"></script><script src="manmul/game-data.js"></script><script src="manmul/themes.js"></script><script src="records.js"></script><script src="progression.js"></script><script src="summon-fusion-fx.js"></script><script src="manmul/basic-data.js"></script><script src="manmul/upper-basic-data.js"></script><script src="manmul/reactions.js"></script><script src="manmul/combat.js"></script><script src="manmul/targeting.js"></script><script src="manmul/basic.js"></script><script src="manmul/skill-data.js"></script><script src="manmul/skills.js"></script><script src="manmul/effects.js"></script><script src="manmul/summons.js"></script><script src="manmul/passives.js"></script><script src="manmul/arena.js"></script><script src="manmul/bridge.js"></script><script src="manmul/roles.js"></script><script src="manmul/target-rules.js"></script><script src="manmul/magic-art-data.js"></script><script src="manmul/upper-art-data.js"></script><script src="manmul/normal-basic-fx.js"></script><script src="manmul/skill-fx-data.js"></script><script src="manmul/skill-fx.js"></script><script src="manmul/book-portrait-data.js"></script><script src="manmul/skill-icon-data.js"></script><script src="manmul/game.js"></script><script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script><script src="multiplayer.js"></script></body></html>

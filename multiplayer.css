@@ -1,0 +1,33 @@
+/* 멀티 플레이: 임시 스타일. 실제 디자인은 별도 작업에서 다듬는다. */
+.multi-box{margin-top:12px;padding:12px 14px;border:1px solid #b69a6466;border-radius:12px;background:#0f1a1dcc;color:#e3dcc7}
+.multi-head{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}
+.multi-head strong{font-size:15px}
+.multi-head small{color:#a59d86}
+.multi-code{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:6px;background:#2a2418;color:#f1d58e;letter-spacing:.18em;font-family:Consolas,monospace;user-select:all}
+.multi-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.multi-box button{font:inherit;color:#eef6ed;background:#17262b;border:1px solid #b69a6499;border-radius:8px;padding:7px 12px;cursor:pointer}
+.multi-box button:hover:not(:disabled){border-color:#f1d58e}
+.multi-box button:disabled{opacity:.5;cursor:default}
+.multi-box .multi-primary{background:#5b4a24;border-color:#d8b863}
+.multi-join{display:flex;gap:6px}
+.multi-join input{width:96px;font:inherit;color:#eef6ed;background:#17262b;border:1px solid #739b8c;border-radius:8px;padding:7px 10px;text-transform:uppercase;letter-spacing:.12em}
+.multi-players{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin:0 0 10px;padding:0;list-style:none}
+.multi-players li{padding:4px 8px;border-radius:6px;background:#17262b}
+.multi-players .multi-empty{color:#6f6a5c;background:#121c1f}
+.multi-crown{color:#f1d58e;margin-right:4px}
+.multi-status{margin:8px 0 0;color:#f0c36d;font-size:13px}
+
+.multi-board{top:16px;left:16px;width:240px;padding:10px 12px;font-size:12px;line-height:1.45}
+.multi-board-head{display:flex;justify-content:space-between;margin-bottom:6px;font-weight:bold;color:#d1ded8}
+.multi-board-head small{color:#8fa79f;letter-spacing:.12em}
+.multi-card{padding:6px 0;border-top:1px solid #9fc4bd33}
+.multi-card.is-self strong{color:#f1d58e}
+.multi-card.is-out{opacity:.55}
+.multi-card-top{display:flex;justify-content:space-between;gap:8px}
+.multi-card-top strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.multi-card-top small{color:#8fa79f;font-weight:normal}
+.multi-card-bar{height:4px;margin:4px 0;border-radius:2px;background:#17201d;overflow:hidden}
+.multi-card-bar i{display:block;height:100%;background:#8bed8c}
+.multi-card[data-level="warn"] .multi-card-bar i{background:#f2c94c}
+.multi-card[data-level="danger"] .multi-card-bar i{background:#ff6b5e}
+.multi-card-meta{color:#b7c9c1}
