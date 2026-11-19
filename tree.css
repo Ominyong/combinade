@@ -141,3 +141,14 @@ body.tree-open .hub-menu, body.tree-open .hub-profile-panel { visibility: hidden
 .tree-open-btn:hover { border-color: #f0cb82; }
 .tree-open-btn strong { font-size: 15px; }
 .tree-open-btn small { font-size: 11px; color: #c9b88f; }
+
+/* First visit with shards to spend: make the button pulse once the player can learn something. */
+.tree-open-btn.is-new { border-color: #f0cb82; animation: treeOpenPulse 1.6s ease-in-out infinite; }
+@keyframes treeOpenPulse { 50% { box-shadow: 0 0 14px #f0cb8288; } }
+
+/* 수호자 레벨 on the title panel */
+.guardian-level { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12px; color: #d7cfb9; }
+.guardian-level b { color: #f0cb82; }
+.guardian-bar { height: 8px; background: #0a1011; border: 1px solid #3a4540; }
+.guardian-bar i { display: block; height: 100%; background: linear-gradient(90deg, #b69a64, #f0cb82); }
+.guardian-level small { color: #a59d86; }

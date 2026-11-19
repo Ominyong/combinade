@@ -10,7 +10,8 @@ const treeCategories={
  combat:{name:'전투',tags:'공격력 · 보스 · 원소',flavor:'균열을 막아 온 수호자들의 검술이 다음 세대로 이어집니다.',icon:'sword',color:'#ef8f6a'},
  economy:{name:'경제',tags:'골드 · 판매 · 파편',flavor:'전선을 지탱하는 것은 결국 보급입니다. 한 닢도 헛되이 쓰지 않습니다.',icon:'coins',color:'#f4d06f'},
  summon:{name:'소환',tags:'선택권 · 정예 · 소집',flavor:'균열 너머에서 더 강한 동료를 불러내는 계약을 맺습니다.',icon:'star',color:'#8bd4c6'},
- cards:{name:'카드',tags:'보상 카드 · 세트 · 해금',flavor:'보스를 쓰러뜨릴 때 얻는 카드를 넓히고, 더 좋은 패를 끌어옵니다.',icon:'cards',color:'#c79bff'}
+ cards:{name:'카드',tags:'보상 카드 · 세트 · 해금',flavor:'보스를 쓰러뜨릴 때 얻는 카드를 넓히고, 더 좋은 패를 끌어옵니다.',icon:'cards',color:'#c79bff'},
+ rift:{name:'균열',tags:'현상금 · 미션 · 지원',flavor:'균열을 오래 지켜 온 수호자만 아는 요령입니다. 사냥과 의뢰, 비상시의 대비를 익힙니다.',icon:'rift',color:'#e78fc8'}
 };
 const treeEffectText={
  power:v=>`모든 유닛 공격력 +${v}%`,physical:v=>`물리 유닛 공격력 +${v}%`,magic:v=>`마법 유닛 공격력 +${v}%`,boss:v=>`보스 대상 피해 +${v}%`,
@@ -18,10 +19,11 @@ const treeEffectText={
  startGold:v=>`시작 골드 +${v}`,income:v=>`라운드 시작 골드 +${v}`,bossGold:v=>`보상 카드로 받는 골드 +${v}%`,sale:v=>`유닛 판매 가격 +${v}%`,convert:v=>`같은 등급 변환 비용 -${v}%`,
  killGold:v=>`일반 몬스터 처치 시 ${v}% 확률로 골드 +1`,shard:v=>`전투에서 얻는 파편 +${v}%`,
  ticketNormal:v=>`전투 시작 시 노말 선택권 +${v}장`,ticketMagic:v=>`전투 시작 시 매직 선택권 +${v}장`,elite:v=>`소환할 때 ${v}% 확률로 매직 유닛`,
- luck:v=>`희귀·전설 카드 등장 +${v}%`,cardChoice:v=>`보상 카드 선택지 +${v}장`,setSize:v=>`세트 효과에 필요한 카드 ${3-v}장`
+ luck:v=>`희귀·전설 카드 등장 +${v}%`,cardChoice:v=>`보상 카드 선택지 +${v}장`,setSize:v=>`세트 효과에 필요한 카드 ${3-v}장`,
+ huntCooldown:v=>`현상금 보스 재소환 시간 -${v}%`,huntTime:v=>`현상금 보스 제한 시간 +${v}초`,missionGold:v=>`미션 골드 보상 +${v}%`,support:v=>`긴급 지원 폭격·봉쇄 사용 횟수 +${v}`,upgradeDiscount:v=>`등급 강화 비용 -${v}%`,startCard:v=>v?'전투를 시작할 때 보상 카드 1장 선택':'효과 없음'
 };
 // Percent-type keys store whole percents; treeBonus() returns them as fractions.
-const treePercentKeys=new Set(['power','physical','magic','boss','speed','burn','slow','armor','resist','bossGold','sale','convert','killGold','shard','elite','luck']);
+const treePercentKeys=new Set(['power','physical','magic','boss','speed','burn','slow','armor','resist','bossGold','sale','convert','killGold','shard','elite','luck','huntCooldown','missionGold','upgradeDiscount']);
 const treeNodes={
  // 전투
  power:{cat:'combat',row:0,col:0,name:'수호의 결의',sub:'모든 유닛',icon:'sword',max:10,cost:[1,1],effect:{key:'power',per:2},description:'선대 수호자의 각오를 이어받아 모든 유닛이 더 세게 공격합니다.'},
@@ -52,7 +54,14 @@ const treeNodes={
  // 카드
  luck:{cat:'cards',row:0,col:0,name:'행운의 손',sub:'희귀·전설',icon:'clover',max:4,cost:[2,2],effect:{key:'luck',per:15},description:'보상 카드에서 희귀·전설 카드가 더 자주 나옵니다.'},
  insight:{cat:'cards',row:0,col:2,name:'넓은 시야',sub:'선택지',icon:'eye',max:1,cost:[10,0],effect:{key:'cardChoice',per:1},requires:[['luck',2]],description:'보스 보상 카드를 한 장 더 보고 고릅니다.'},
- setMastery:{cat:'cards',row:2,col:1,name:'세트 숙련',sub:'세트 효과',icon:'cards',max:1,cost:[15,0],effect:{key:'setSize',per:1},requires:[['insight',1]],description:'같은 계열 카드를 2장만 모아도 세트 효과가 켜집니다.'}
+ setMastery:{cat:'cards',row:2,col:1,name:'세트 숙련',sub:'세트 효과',icon:'cards',max:1,cost:[15,0],effect:{key:'setSize',per:1},requires:[['insight',1]],description:'같은 계열 카드를 2장만 모아도 세트 효과가 켜집니다.'},
+ // 균열 (2차 확장)
+ tracking:{cat:'rift',row:0,col:0,name:'추적술',sub:'재소환 시간',icon:'eye',max:5,cost:[2,1],effect:{key:'huntCooldown',per:8},description:'현상금 보스의 흔적을 빨리 찾아 더 자주 불러낼 수 있습니다.'},
+ snare:{cat:'rift',row:0,col:1,name:'덫 놓기',sub:'제한 시간',icon:'hourglass',max:3,cost:[3,2],effect:{key:'huntTime',per:4},requires:[['tracking',1]],description:'현상금 보스가 도망치기까지 시간이 늘어납니다.'},
+ commission:{cat:'rift',row:0,col:2,name:'의뢰 수수료',sub:'미션 골드',icon:'flag',max:3,cost:[2,1],effect:{key:'missionGold',per:20},description:'미션을 달성할 때 받는 골드가 늘어납니다.'},
+ reserves:{cat:'rift',row:1,col:0,name:'비상 물자',sub:'긴급 지원',icon:'bag',max:2,cost:[4,3],effect:{key:'support',per:1},requires:[['tracking',2]],description:'긴급 지원의 균열 폭격과 봉쇄를 판마다 한 번씩 더 쓸 수 있습니다.'},
+ forgeFriend:{cat:'rift',row:1,col:2,name:'대장간 단골',sub:'강화 비용',icon:'sword',max:5,cost:[2,1],effect:{key:'upgradeDiscount',per:6},requires:[['commission',1]],description:'등급 강화에 드는 골드가 줄어듭니다.'},
+ heirloom:{cat:'rift',row:2,col:1,name:'선대의 유품',sub:'시작 카드',icon:'card',max:1,cost:[15,0],effect:{key:'startCard',per:1},requires:[['reserves',1],['forgeFriend',2]],description:'전투를 시작할 때 보상 카드 한 장을 먼저 고르고 들어갑니다.'}
 };
 function treeCost(id,level=progression.levels[id]||0){let n=treeNodes[id];return n.cost[0]+n.cost[1]*level}
 function treeRequirementsMet(id,levels=progression.levels){return (treeNodes[id].requires||[]).every(([req,lv])=>(levels[req]||0)>=lv)}
@@ -62,11 +71,16 @@ function treeBonus(key,levels=progression.levels){let sum=0;for(const [id,n] of 
 function treeCardUnlocks(levels=progression.levels){return Object.entries(treeNodes).filter(([id,n])=>n.effect.key==='card'&&(levels[id]||0)>0).map(([,n])=>n.effect.card)}
 function treeEffectLine(id,level){let n=treeNodes[id],e=n.effect;if(e.key==='card'){let c=globalThis.ManmulCards?.cards[e.card];return c?`보상 카드 「${c.name}」 해금`:'보상 카드 해금'}return treeEffectText[e.key]((e.per||0)*level)}
 const progressionSkills=treeNodes;
-function readProgression(){try{let data=JSON.parse(localStorage.getItem(progressionKey)||'{}'),levels={};for(const [id,node] of Object.entries(treeNodes))levels[id]=Math.max(0,Math.min(node.max,Number.isInteger(data.levels?.[id])?data.levels[id]:0));return {shards:Math.max(0,Number.isInteger(data.shards)?data.shards:0),levels}}catch(e){return {shards:0,levels:Object.fromEntries(Object.keys(treeNodes).map(id=>[id,0]))}}}
+function readProgression(){try{let data=JSON.parse(localStorage.getItem(progressionKey)||'{}'),levels={};for(const [id,node] of Object.entries(treeNodes))levels[id]=Math.max(0,Math.min(node.max,Number.isInteger(data.levels?.[id])?data.levels[id]:0));return {shards:Math.max(0,Number.isInteger(data.shards)?data.shards:0),xp:Math.max(0,Number.isInteger(data.xp)?data.xp:0),levels}}catch(e){return {shards:0,levels:Object.fromEntries(Object.keys(treeNodes).map(id=>[id,0]))}}}
 let progression=readProgression();
 function saveProgression(next){try{localStorage.setItem(progressionKey,JSON.stringify(next));progression=next;return true}catch(e){return false}}
-function purchaseProgression(id){if(!treeNodes[id]||!treeCanBuy(id))return false;let level=progression.levels[id]||0;return saveProgression({shards:progression.shards-treeCost(id),levels:{...progression.levels,[id]:level+1}})}
-function grantClearShards(amount=3){return saveProgression({shards:progression.shards+amount,levels:{...progression.levels}})}
+function purchaseProgression(id){if(!treeNodes[id]||!treeCanBuy(id))return false;let level=progression.levels[id]||0;return saveProgression({...progression,shards:progression.shards-treeCost(id),levels:{...progression.levels,[id]:level+1}})}
+function grantClearShards(amount=3){return saveProgression({...progression,shards:progression.shards+amount,levels:{...progression.levels}})}
+// ---- 수호자 레벨: account XP from every run (rounds, missions, bounty kills). Every level pays shards. ----
+const guardianRules={base:120,step:40,shardsPerLevel:3,difficulty:{easy:1,normal:1.3,hard:1.7,extreme:2.2}};
+function guardianLevel(xp=progression.xp||0){let level=1,need=guardianRules.base;while(xp>=need){xp-=need;level++;need=guardianRules.base+guardianRules.step*(level-1)}return {level,into:xp,need}}
+function runXp({difficultyId='normal',rounds=0,won=false,missions=0,hunts=0}={}){return Math.round(rounds*2*(guardianRules.difficulty[difficultyId]??1)+(won?50:0)+missions*6+hunts*4)}
+function grantRunXp(amount){let before=guardianLevel().level,xp=(progression.xp||0)+Math.max(0,amount),after=guardianLevel(xp).level,levels=after-before,shards=levels*guardianRules.shardsPerLevel;let saved=saveProgression({...progression,xp,shards:progression.shards+shards,levels:{...progression.levels}});return {saved,xp:amount,level:after,levelsUp:levels,shards}}
 
 // Clear rewards: shards scale with difficulty. Cosmetics come from records.js achievements and collection,
 // not from first clears. `unlock` is kept only so cosmetics earned under the old first-clear rule stay owned.

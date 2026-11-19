@@ -11,7 +11,13 @@ const ManmulTutorial=(()=>{
  const playing=()=>typeof inLobby!=='undefined'&&!inLobby&&!ended&&introRemaining<=0&&!themePending;
  // 지금 가진 유닛으로 만들 수 있는 조합이 있는지
  function anyRecipeReady(){let have={};for(const u of units)have[u.type]=(have[u.type]||0)+1;return recipes.some(r=>{let need={};for(const p of r.parts)need[p]=(need[p]||0)+1;return Object.entries(need).every(([t,n])=>(have[t]||0)>=n)})}
- const relicOffered=()=>pendingRewards.length&&pendingRewards[0].some(id=>typeof relics==='object'&&relics[id]);
+ const relicOffered=()=>pendingRewards.length>0;
+ // 새 기능 안내에 쓰는 조건들 (manmul/missions.js, manmul/marks.js)
+ const huntBoss=id=>typeof huntBosses==='object'?huntBosses.find(b=>b.id===id):null;
+ const huntOpen=id=>{let b=huntBoss(id);return !!b&&wave>=b.from};
+ const huntText=id=>{let b=huntBoss(id);return b?`이제 <b>${b.name}</b>(${b.tier}단계)도 부를 수 있습니다. 제한 시간 ${b.time}초, 현상금은 ${huntRewardText(b,wave)}입니다.`:''};
+ const markedEnemy=()=>enemies.some(e=>Object.values(e.manmulMarks||{}).some(t=>t>combatTime));
+ const missionDone=hidden=>typeof missionList==='object'&&missionList.some(m=>!!m.hidden===hidden&&missionState.done[m.id]);
  // 순서가 곧 우선순위다. 같은 순간에 여러 조건이 맞으면 앞의 것부터 보여 준다.
  const hints=[
   {id:'summon',when:()=>units.length===0,title:'유닛 소환',text:'Q 또는 아래 <b>소환</b> 버튼으로 노말 유닛을 뽑으세요(20골드). 유닛은 사거리 안의 적을 자동으로 공격합니다.'},
@@ -23,8 +29,15 @@ const ManmulTutorial=(()=>{
   {id:'upgrade',when:()=>wave>=4&&gold>=50,title:'등급 강화',text:'W로 <b>같은 등급 유닛 전체</b>를 강화할 수 있습니다. 강화 단계는 기본 공격 아이콘의 +N으로, 오른 공격력은 초록색 +수치로 표시됩니다.'},
   {id:'lap',when:()=>enemies.some(e=>e.laps>0),title:'균열 순환',text:'적이 바깥길을 한 바퀴 돌 때마다 최대 체력이 늘어납니다(체력바 옆 <b>빨간 점</b>). 놓친 적은 빨리 처치하거나, 감속·묶기로 순환을 늦추세요.'},
   {id:'boss',when:()=>!!upcomingBoss,title:'보스 예고',text:'다음 보스의 이름과 능력이 위쪽에 표시됩니다. 대응 팁을 보고 미리 유닛을 준비하세요. 보스는 10라운드마다 나옵니다.'},
-  {id:'relic',when:()=>relicOffered(),title:'보상 카드',text:'카드는 <b>전술·유물·경제·소환</b> 네 계열입니다. 같은 계열을 <b>3장</b> 모으면 세트 효과가 켜집니다. 유물 카드는 판마다 한 번만 얻습니다.'},
+  {id:'relic',when:()=>relicOffered(),title:'보상 카드',text:'보스를 잡을 때마다 카드 한 장을 고릅니다. 카드는 <b>전술·유물·경제·소환</b> 네 계열이고, 같은 계열을 <b>3장</b> 모으면 세트 효과가 켜집니다(창 위쪽에 진행도 표시). 모은 카드는 메뉴의 「보상 카드」에서 다시 볼 수 있습니다.'},
   {id:'ticket',when:()=>typeof ticketTotal==='function'&&ticketTotal()>0,title:'선택권',text:'<b>선택권</b>을 얻었습니다. 오른쪽 위 선택권 버튼으로 원하는 유닛을 골라 소환하세요. 쓰기 전까지 보관됩니다.'},
+  {id:'hunt',when:()=>wave>=2&&typeof huntReadyCount==='function'&&huntReadyCount()>0,title:'현상금 사냥',text:'오른쪽 위 <b>현상금</b> 버튼으로 현상금 보스를 직접 불러낼 수 있습니다. 제한 시간 안에 잡으면 골드·선택권을 받고, 놓치면 도망칩니다. 전력에 여유가 있을 때 부르세요.'},
+  {id:'mission',when:()=>wave>=3&&typeof missionList==='object',title:'미션',text:'왼쪽 <b>미션</b> 카드에 거의 다 된 미션이 보입니다. 조건을 채우는 순간 보상을 바로 받고, 카드를 누르면 전체 목록과 받은 보상을 볼 수 있습니다.'},
+  {id:'marks',when:()=>wave>=3&&markedEnemy(),title:'표식',text:'적 머리 위 <b>색 네모</b>가 표식입니다. 표식이 붙은 적을 다른 공격으로 때리면 반응이 터집니다. 도감(E)의 <b>표식</b> 버튼으로 붙이는 유닛·활용하는 유닛을 찾고, 「표식·반응 안내」에서 조합을 볼 수 있습니다.'},
+  {id:'hunt2',when:()=>huntOpen('gosichu'),title:'새 현상금 보스',text:()=>huntText('gosichu')},
+  {id:'hiddenMission',when:()=>missionDone(true),title:'히든 미션 발견!',text:'조건이 숨겨진 <b>히든 미션</b>을 달성했습니다. 미션 목록의 <b>???</b> 칸에 아직 찾지 못한 히든 미션이 남아 있습니다.'},
+  {id:'hunt3',when:()=>huntOpen('hubii'),title:'새 현상금 보스',text:()=>huntText('hubii')},
+  {id:'hunt4',when:()=>huntOpen('ominyong'),title:'새 현상금 보스',text:()=>huntText('ominyong')},
   {id:'convert',when:()=>wave>=8&&units.length>=8,title:'같은 등급 변환',text:'쓸 곳이 없는 유닛을 하나 선택하고 <b>D</b>를 누르면 같은 등급의 다른 유닛으로 바꿉니다(골드 필요).'},
   {id:'danger',when:()=>enemies.length>=60,title:'위험!',text:'몬스터가 60마리를 넘었습니다. 오른쪽 위 <b>긴급 지원</b>으로 폭격·감속을 쓰거나, 조합으로 화력을 올리세요.'}
  ];

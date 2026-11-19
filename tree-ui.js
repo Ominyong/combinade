@@ -23,7 +23,10 @@ const treeIcons={
  ticket:['.........','#########','#.......#','..#####..','#.......#','..#####..','#.......#','#########','.........'],
  star:['....#....','....#....','...###...','#########','.#######.','..#####..','..##.##..','.##...##.','.#.....#.'],
  gem:['..#####..','.#.#.#.#.','#########','.#.....#.','..#...#..','...#.#...','....#....','.........','.........'],
- clover:['.##...##.','####.####','####.####','.##.#.##.','...###...','.##.#.##.','####.####','.##...##.','....#....']
+ clover:['.##...##.','####.####','####.####','.##.#.##.','...###...','.##.#.##.','####.####','.##...##.','....#....'],
+ rift:['....#....','...##....','..##.....','..###....','...###...','....###..','.....##..','....##...','....#....'],
+ hourglass:['#########','.#.....#.','..#...#..','...#.#...','....#....','...#.#...','..#.###..','.#######.','#########'],
+ flag:['.#.......','.#####...','.#######.','.#####...','.#.......','.#.......','.#.......','.#.......','###......']
 };
 function treeIconSvg(name,cls='tree-icon'){let rows=treeIcons[name]||treeIcons.star,rects='';rows.forEach((r,y)=>{for(let x=0;x<r.length;x++)if(r[x]==='#')rects+=`<rect x="${x}" y="${y}" width="1" height="1"/>`});return `<svg class="${cls}" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true" fill="currentColor">${rects}</svg>`}
 const treeState={cat:'combat',node:null};
@@ -77,5 +80,7 @@ function treeHoldCancel(){if(treeHoldTimer){clearTimeout(treeHoldTimer);treeHold
 document.addEventListener?.('keydown',e=>{if(e.key==='Escape'&&!$('#treeScreen')?.classList.contains('hidden')){e.stopImmediatePropagation?.();closeTree()}},true);
 // Title panel summary: per-category progress and the button that opens the screen.
 function renderTreeSummary(){let box=$('#hubSkills');if(!box)return;let total=Object.keys(treeNodes).reduce((s,id)=>s+(treeCanBuy(id)?1:0),0);
- box.innerHTML=`<div class="tree-summary">${Object.entries(treeCategories).map(([cat,c])=>{let list=treeNodesOf(cat),lv=list.reduce((s,[id])=>s+(progression.levels[id]||0),0),max=list.reduce((s,[,n])=>s+n.max,0);return `<button type="button" class="tree-summary-cat" style="--cat:${c.color}" onclick="openTree('${cat}')"><span class="tree-summary-icon">${treeIconSvg(c.icon)}</span><span>${c.name}</span><span class="tree-summary-bar"><i style="width:${Math.round(lv/Math.max(1,max)*100)}%"></i></span><small>${lv}/${max}</small></button>`}).join('')}</div><button type="button" class="tree-open-btn" onclick="openTree()"><strong>계승의 나무 열기</strong><small>${total?`지금 익힐 수 있는 기술 ${total}개`:'파편을 모아 기술을 익히세요'}</small></button>`}
+ if(total&&!Object.values(progression.levels).some(l=>l>0)&&$('#hubMessage')&&!$('#hubMessage').textContent)$('#hubMessage').textContent='균열의 파편이 모였습니다. 「계승의 나무 열기」에서 첫 기술을 익혀 보세요. 다음 전투부터 적용됩니다.';
+ let gl=guardianLevel();
+ box.innerHTML=`<div class="guardian-level" title="전투를 마칠 때마다 경험치를 얻고, 레벨이 오르면 파편 ${guardianRules.shardsPerLevel}개를 받습니다"><b>수호자 Lv.${gl.level}</b><span class="guardian-bar"><i style="width:${Math.round(gl.into/gl.need*100)}%"></i></span><small>${gl.into}/${gl.need}</small></div><div class="tree-summary">${Object.entries(treeCategories).map(([cat,c])=>{let list=treeNodesOf(cat),lv=list.reduce((s,[id])=>s+(progression.levels[id]||0),0),max=list.reduce((s,[,n])=>s+n.max,0);return `<button type="button" class="tree-summary-cat" style="--cat:${c.color}" onclick="openTree('${cat}')"><span class="tree-summary-icon">${treeIconSvg(c.icon)}</span><span>${c.name}</span><span class="tree-summary-bar"><i style="width:${Math.round(lv/Math.max(1,max)*100)}%"></i></span><small>${lv}/${max}</small></button>`}).join('')}</div><button type="button" class="tree-open-btn${total&&!Object.values(progression.levels).some(l=>l>0)?' is-new':''}" onclick="openTree()"><strong>계승의 나무 열기</strong><small>${total?`지금 익힐 수 있는 기술 ${total}개`:'파편을 모아 기술을 익히세요'}</small></button>`}
 renderTreeSummary();
