@@ -23,7 +23,7 @@ body, button, input, select, textarea, .hub, .hub-profile, .profile-name input,
 
 /* ---------- 패널: 도트 9-slice 프레임 (12×12, 모서리 4칸 → 화면 8px) ---------- */
 .top, .right, .actions, .selected, .goal-tracker, .modal .panel,
-.hub-balance, .hub-profile, .mode-card, .hub-skill, .hub-dialog-panel {
+.hub-balance, .hub-profile, .mode-card, .hub-skill, .hub-dialog-panel, .hub-play, .hub-profile-panel {
   border-style: solid;
   border-width: 8px;
   border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' shape-rendering='crispEdges'%3E%3Cpath fill='%23070c0f' d='M1 0h10v1H1zM1 11h10v1H1zM0 1h1v10H0zM11 1h1v10h-1z'/%3E%3Cpath fill='%23b69a64' d='M1 1h10v10H1z'/%3E%3Cpath fill='%2317262b' d='M2 2h8v8H2z'/%3E%3Cpath fill='%232c4246' d='M2 2h8v1H2zM2 3h1v7H2z'/%3E%3Cpath fill='%230c1518' d='M3 9h7v1H3zM9 3h1v6H9z'/%3E%3C/svg%3E") 4 fill / 8px / 0 stretch;
