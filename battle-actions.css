@@ -768,3 +768,58 @@ body:has(#modal:not(.hidden)) .toast { top: auto; bottom: 24px; }
 .boss-preview-more { display: none; margin-top: 4px; }
 .boss-preview:hover .boss-preview-more, .boss-preview:focus-within .boss-preview-more { display: block; }
 .boss-preview-more-hint { margin-left: 6px; color: #8fa79f; font-size: 11px; }
+
+/* Codex: let the grid and detail panes scroll inside the fixed-height window. */
+.codex .ui-modal-body { flex: 1; min-height: 0; }
+.codex-body > * { min-height: 0; }
+/* Whole ingredient chip / "used in" row is clickable, not just the small icon. */
+.modal button.codex-part { padding: 2px 8px 2px 2px; background: #13232a; border: 1px solid #3f5a55; border-radius: 6px; color: inherit; cursor: pointer; }
+.modal button.codex-part:hover { background: #1b3036; border-color: #f0d58f; }
+.codex-use { padding: 2px 4px; border: 1px solid transparent; border-radius: 6px; cursor: pointer; }
+.codex-use:hover, .codex-use:focus-visible { background: #1b3036; border-color: #f0d58f; outline: none; }
+.codex-usesof { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border: 1px solid #b69a64; border-radius: 6px; background: #1f2c22; font-size: 13px; }
+.codex-usesof .ingredient-portrait { width: 28px; height: 28px; }
+
+/* Enemy card: big health bar so a clicked enemy is easy to read at a glance. */
+.enemy-card { min-width: 460px; }
+.enemy-card-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.enemy-card-head strong { font-size: 18px; }
+.enemy-kind { padding: 1px 6px; border: 1px solid #789f90; border-radius: 4px; font-size: 11px; color: #cfe5dc; }
+.enemy-card.is-boss .enemy-kind, .enemy-card.is-miniboss .enemy-kind { border-color: #e58b6e; color: #ffc4ad; }
+.enemy-card.is-elite .enemy-kind { border-color: #c9a75c; color: #f4d98f; }
+.enemy-hp { position: relative; height: 26px; background: #1a1212; border: 2px solid #050808; box-shadow: inset 0 0 0 1px #4b3434; overflow: hidden; }
+.enemy-hp i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(#e6655a 0 45%, #b8392f 45%); transition: width .15s linear; }
+.enemy-hp b { position: absolute; inset: 0 auto auto 0; height: 6px; background: #9fd8ff; opacity: .9; }
+.enemy-hp span { position: relative; display: block; text-align: center; line-height: 22px; font-weight: 700; font-size: 14px; color: #fff; text-shadow: 1px 1px 0 #000, -1px 0 0 #000; }
+.enemy-hp small { opacity: .8; font-size: 11px; }
+.enemy-stats { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 6px; font-size: 13px; }
+.enemy-stats b { font-size: 15px; }
+.enemy-note { margin: 4px 0 0; color: #a9bdb5; font-size: 12px; }
+.enemy-mark { display: inline-block; margin-left: 3px; padding: 0 5px; border-radius: 3px; background: #2f4a44; color: #e6fff6; }
+/* Bottom info panel size (설정 · 정보창 크기). */
+#selection { --sel-scale: 1; }
+#selection:not(.hidden) { transform: translateX(-50%) scale(var(--sel-scale)); transform-origin: 50% 100%; }
+.goal-heading { display: flex; align-items: center; gap: 4px; }
+.goal-heading strong { margin-right: auto; }
+.goal-heading .goal-expand-all { font-size: 11px; padding: 1px 6px; }
+.sel-zoom { position: absolute; left: 6px; top: -26px; display: flex; align-items: center; gap: 2px; padding: 2px 4px; background: var(--hud-bg, #0d1a1a); border: 1px solid var(--hud-edge, #3f5a55); border-radius: 6px 6px 0 0; font-size: 11px; color: #cfe5dc; }
+.sel-zoom button { width: 22px; height: 20px; padding: 0; line-height: 1; font-size: 14px; }
+.sel-zoom span { min-width: 34px; text-align: center; }
+
+/* ---- Boss reward cards (manmul/cards.js): family colour band on top, rarity on the frame. ---- */
+.modal .panel:has(.reward-cards.is-four) { width: min(1040px,1440px); }
+.modal .reward-list.reward-cards.is-four { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.modal .reward-list.reward-cards > button.reward-card { border-color: color-mix(in srgb, var(--fam) 70%, #000); padding-top: 34px; min-height: 220px; transition: transform .12s ease; }
+.modal .reward-list.reward-cards > button.reward-card:hover:not(:disabled) { transform: translateY(-4px); border-color: var(--fam); }
+.reward-card .card-band { position: absolute; left: 0; right: 0; top: 0; display: flex; justify-content: space-between; padding: 4px 10px; background: color-mix(in srgb, var(--fam) 28%, #0b1414); border-bottom: 1px solid color-mix(in srgb, var(--fam) 60%, #000); font-size: 11px; font-weight: 700; color: var(--fam); }
+.reward-card .reward-icon, .reward-relic .reward-icon { background: var(--fam); color: #14100a; }
+.reward-card.rarity-rare .card-band span:last-child { color: #9fd8ff; }
+.reward-card.rarity-legend { background: linear-gradient(160deg, #3a2b12, #182322 55%) !important; box-shadow: 0 0 0 1px #f4d06f, 0 0 18px #f4d06f55 !important; }
+.reward-card.rarity-legend .card-band span:last-child { color: #ffe9a8; text-shadow: 0 0 6px #f4d06f; }
+.card-deck { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; margin: 0 0 8px; }
+.card-set { display: flex; flex-direction: column; gap: 2px; padding: 5px 8px; border: 1px solid color-mix(in srgb, var(--fam) 40%, #000); border-radius: 6px; background: #0f1a1a; font-size: 12px; color: #cfdcd6; }
+.card-set b { color: var(--fam); }
+.card-set small { font-size: 10px; color: #8fa79f; line-height: 1.3; }
+.card-set.is-on { border-color: var(--fam); background: color-mix(in srgb, var(--fam) 16%, #0f1a1a); }
+.card-set.is-on small { color: #e6fff6; }
+.reward-owned { color: #cfdcd6; }

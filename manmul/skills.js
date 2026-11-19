@@ -1,12 +1,15 @@
 'use strict';
 // Deterministic execution for manually specified v5 active abilities.
 (function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory(require('./combat.js'),require('./reactions.js'),require('./skill-data.js'));else root.ManmulSkills=factory(root.ManmulCombat,root.ManmulReactions,root.ManmulSkillData)})(globalThis,function(combat,reactions,definitions){
+ const UNMARKED_FACTOR=.6;
  function isDamageSkill(def){return !!def&&['attack','dot','recordedDamage','scatter','mixed','clusterShots','clusterAreas','highAndNearby','bossSplash','mines','differentAreas','summon'].includes(def.kind)}
  function cast(actor,now,world){
-  const def=definitions[actor.id];if(!def||!Number.isFinite(now)||now<(actor.skillReadyAt||0)||typeof world.targets!=='function')return false;
+  let def=definitions[actor.id];if(!def||!Number.isFinite(now)||now<(actor.skillReadyAt||0)||typeof world.targets!=='function')return false;
   let power=actor.skill_power??actor.attack,durationBonus=actor.effectDurationBonus||0,durationFactor=actor.effectDurationFactor||1;if(!Number.isFinite(power)||power<=0)return false;
-  const candidates=world.targets(actor,{select:def.select,shape:def.shape||'target',radius:def.radius,limit:null,requiresMark:def.requiresMark,global:def.global||actor.grade==='재앙',now});
+  let candidates=world.targets(actor,{select:def.select,shape:def.shape||'target',radius:def.radius,limit:null,requiresMark:def.requiresMark,global:def.global||actor.grade==='재앙',now});
   if(!Array.isArray(candidates))return false;
+  // Mark-hunting skills (e.g. 유성 needs 균열) still fire when nobody carries the mark: they hit unmarked enemies at reduced power.
+  if(def.requiresMark&&!candidates.some(e=>e&&e.hp>0)){candidates=world.targets(actor,{select:def.select,shape:def.shape||'target',radius:def.radius,limit:null,global:def.global||actor.grade==='재앙',now});if(!Array.isArray(candidates))return false;def={...def,requiresMark:null,factor:(def.factor||0)*UNMARKED_FACTOR}}
   if(def.kind==='copySkill'||def.kind==='reviveSummon'){
    if(!candidates.some(e=>e&&e.hp>0))return false;
    let success=def.kind==='copySkill'?typeof world.copySkill==='function'&&world.copySkill(actor,def.factor,now):typeof world.reviveSummon==='function'&&world.reviveSummon(actor,now)>0;
@@ -106,5 +109,5 @@
   }if(index===0&&def.extraFirst)world.damage(target,power*def.extraFirst,damageType,{source:actor,secondary:true});if(low&&def.extraLowHealth)world.damage(target,power*def.extraLowHealth,damageType,{source:actor,secondary:true});if(def.extraNet&&(target.manmulNetUntil||0)>now)world.damage(target,power*def.extraNet,damageType,{source:actor,secondary:true});if(def.debuff)world.applyDebuff(target,{...def.debuff,duration:def.debuff.duration*durationFactor+durationBonus,source:actor.id});if(def.dot)world.dot(target,power*def.dot.factor,def.dot.duration,damageType,actor,def.dot.kind)}
   actor.skillReadyAt=now+actor.skill_cooldown_seconds;return true;
  }
- return {cast,definitions,isDamageSkill};
+ return {cast,definitions,isDamageSkill,UNMARKED_FACTOR};
 });

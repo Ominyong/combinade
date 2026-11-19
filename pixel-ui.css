@@ -132,3 +132,16 @@ button:disabled { box-shadow: none; }
 
 /* ---------- 도트 이미지 확대 규칙 (Codex 결과물 연결용) ---------- */
 img[src*="/pixel-v1/"], .pixelated { image-rendering: pixelated; }
+
+/* Pixel scrollbar: square bevelled gold thumb in a dark sunken track, no arrow buttons.
+   Chat log gets it explicitly; :where() gives every other scroll area in the stage the same look
+   without overriding ones that already have their own scrollbar style. */
+/* Chrome ignores ::-webkit-scrollbar once scrollbar-color is set, so the standard properties are for Firefox only. */
+@supports not selector(::-webkit-scrollbar) { .multi-chat-log, :where(#stage) * { scrollbar-width: thin; scrollbar-color: #9b8560 #0c1517; } }
+.multi-chat-log { padding-right: 4px; scrollbar-gutter: stable; }
+.multi-chat-log::-webkit-scrollbar, :where(#stage) ::-webkit-scrollbar { width: 8px; height: 8px; }
+.multi-chat-log::-webkit-scrollbar-track, :where(#stage) ::-webkit-scrollbar-track { background: #0c1517; box-shadow: inset 1px 0 0 #050a0b, inset -1px 0 0 #22363a; }
+.multi-chat-log::-webkit-scrollbar-thumb, :where(#stage) ::-webkit-scrollbar-thumb { background: #9b8560; border-radius: 0; box-shadow: inset 1px 1px 0 #d9c08c, inset -1px -1px 0 #5b4a2f; }
+.multi-chat-log::-webkit-scrollbar-thumb:hover, :where(#stage) ::-webkit-scrollbar-thumb:hover { background: #c3a874; }
+.multi-chat-log::-webkit-scrollbar-button, :where(#stage) ::-webkit-scrollbar-button { display: none; height: 0; }
+.multi-chat-log::-webkit-scrollbar-corner, :where(#stage) ::-webkit-scrollbar-corner { background: transparent; }

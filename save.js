@@ -18,7 +18,7 @@ const inMulti=()=>{let on=typeof Multiplayer==='object'&&Multiplayer.started;if(
  function capture(){return {v:VERSION,at:Date.now(),difficulty:selectedDifficultyId,theme:currentTheme,
   wave,maxWave,gold,combatTime,spawnLeft,spawnTimer,spawnInterval,waveTimer,preparation,uid,enemyId,revealTime,minibossSpawned,minibossCleared,
   units:clone(units),enemies:clone(enemies),upcomingBoss:clone(upcomingBoss),pendingRewards:clone(pendingRewards),
-  gradeLevels:clone(gradeLevels),runLevels:clone(runLevels),runRelics:clone(runRelics),selectionTickets:clone(selectionTickets),
+  gradeLevels:clone(gradeLevels),runLevels:clone(runLevels),runRelics:clone(runRelics),runCards:clone(runCards),selectionTickets:clone(selectionTickets),
   bossBag:clone(bossBag),bossBagTheme,lastBossId,lastBossAbility,supportUses:clone(supportUses),loanRounds,loanRemaining,
   runStats:clone(runStats),record:clone(ManmulRecords.run),goalUnit}}
  function save(){if(!savable())return false;try{localStorage.setItem(KEY,JSON.stringify(capture()));return true}catch(e){return false}}
@@ -36,7 +36,7 @@ const inMulti=()=>{let on=typeof Multiplayer==='object'&&Multiplayer.started;if(
   $('#lobby').classList.add('hidden');document.body?.classList.remove('arena-intro');introRemaining=0;introThemeQueued=false;themePending=false;currentTheme=s.theme;
   ({wave,gold,combatTime,spawnLeft,spawnTimer,spawnInterval,waveTimer,preparation,revealTime,minibossSpawned,minibossCleared,lastBossId,lastBossAbility,loanRounds,loanRemaining,goalUnit}=s);
   bossBag=s.bossBag||[];bossBagTheme=s.bossBagTheme??null;upcomingBoss=s.upcomingBoss||null;pendingRewards=s.pendingRewards||[];
-  fill(gradeLevels,s.gradeLevels);fill(runLevels,s.runLevels);fill(runRelics,s.runRelics||{});selectionTickets={normal:0,magic:0,...(s.selectionTickets||{})};fill(supportUses,s.supportUses);if(s.runStats)fill(runStats,s.runStats);
+  fill(gradeLevels,s.gradeLevels);fill(runLevels,s.runLevels);fill(runRelics,s.runRelics||{});runCards=Array.isArray(s.runCards)?s.runCards.filter(id=>ManmulCards.cards[id]):[];selectionTickets={normal:0,magic:0,...(s.selectionTickets||{})};fill(supportUses,s.supportUses);if(s.runStats)fill(runStats,s.runStats);
   units=[];for(const saved of s.units){if(!types[saved.type])continue;let u={...saved};v5Combat.prepareUnit(u,combatTime);Object.assign(u,saved);units.push(u);skillFxPreload(u.type)}
   enemies=s.enemies.filter(e=>e&&Number.isFinite(e.hp)&&e.hp>0);uid=Math.max(s.uid||0,...units.map(u=>u.id));enemyId=Math.max(s.enemyId||0,...enemies.map(e=>e.id||0));
   // 메뉴가 일시정지를 맡는다: 메뉴를 열면 멈추고, '계속하기'로 닫으면 재개된다.
