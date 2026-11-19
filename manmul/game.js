@@ -8,31 +8,19 @@ Object.assign(unitRoleTags,ManmulRoles.build(types,{...ManmulBasicData,...Manmul
 const normalMotionSpecs=Object.fromEntries(['N001','N002','N003','N004','N005','N006','N007'].map(id=>[id,{cx:24,cy:24,size:22}]));
 // Pixel-art unit sheets (48px cells) are drawn at a whole-number scale so every art pixel stays the same size.
 const PIXEL_UNIT_SCALE=2,PIXEL_UNIT_BASELINE=35;
-const normalMotionImages=new Map();
-for(const id of Object.keys(normalMotionSpecs))if(typeof Image!=='undefined'){
- let image=new Image();image.src=`assets/units/normal/${id}-sheet.png`;normalMotionImages.set(id,image);
-}
-const magicMotionImages=new Map(),magicBasicFxImages=new Map();
-for(const id of Object.keys(magicMotionSpecs))if(typeof Image!=='undefined'){
- let image=new Image();image.src=`assets/units/magic/${id}-sheet.png`;magicMotionImages.set(id,image);
- let fx=new Image();fx.src=`assets/units/manmul-magic/${id}-sheet.png`;magicBasicFxImages.set(id,fx);
-}
+// Unit sheets load on first use (manmul/lazy-images.js); the rest fills in the background after the title shows.
+const normalMotionImages=ManmulLazyImages.lazyImages(Object.keys(normalMotionSpecs),id=>`assets/units/normal/${id}-sheet.png`);
+const magicMotionImages=ManmulLazyImages.lazyImages(Object.keys(magicMotionSpecs),id=>`assets/units/magic/${id}-sheet.png`);
+const magicBasicFxImages=ManmulLazyImages.lazyImages(Object.keys(magicMotionSpecs),id=>`assets/units/manmul-magic/${id}-sheet.png`);
 const rareMotionSpecs=Object.fromEntries(Object.keys(upperMotionSpecs).filter(id=>id.startsWith('R')).map(id=>[id,{cx:24,cy:24,size:25}]));
-const rareMotionImages=new Map();
-for(const id of Object.keys(rareMotionSpecs))if(typeof Image!=='undefined'){let image=new Image();image.src=`assets/units/rare/${id}-sheet.png`;rareMotionImages.set(id,image)}
+const rareMotionImages=ManmulLazyImages.lazyImages(Object.keys(rareMotionSpecs),id=>`assets/units/rare/${id}-sheet.png`);
 const uniqueMotionSpecs=Object.fromEntries(Object.keys(upperMotionSpecs).filter(id=>id.startsWith('U')).map(id=>[id,{cx:24,cy:24,size:29}]));
-const uniqueMotionImages=new Map();
-for(const id of Object.keys(uniqueMotionSpecs))if(typeof Image!=='undefined'){let image=new Image();image.src=`assets/units/unique/${id}-sheet.png`;uniqueMotionImages.set(id,image)}
+const uniqueMotionImages=ManmulLazyImages.lazyImages(Object.keys(uniqueMotionSpecs),id=>`assets/units/unique/${id}-sheet.png`);
 const epicMotionSpecs=Object.fromEntries(Object.keys(upperMotionSpecs).filter(id=>id.startsWith('E')).map(id=>[id,{cx:24,cy:24,size:29}]));
-const epicMotionImages=new Map();
-for(const id of Object.keys(epicMotionSpecs))if(typeof Image!=='undefined'){let image=new Image();image.src=`assets/units/epic/${id}-sheet.png`;epicMotionImages.set(id,image)}
+const epicMotionImages=ManmulLazyImages.lazyImages(Object.keys(epicMotionSpecs),id=>`assets/units/epic/${id}-sheet.png`);
 const legendaryMotionSpecs=Object.fromEntries(Object.keys(upperMotionSpecs).filter(id=>id.startsWith('L')).map(id=>[id,{cx:24,cy:24,size:34}]));
-const legendaryMotionImages=new Map();
-for(const id of Object.keys(legendaryMotionSpecs))if(typeof Image!=='undefined'){let image=new Image();image.src=`assets/units/legendary/${id}-sheet.png`;legendaryMotionImages.set(id,image)}
-const upperMotionImages=new Map();
-for(const id of Object.keys(upperMotionSpecs))if(typeof Image!=='undefined'){
- let image=new Image();image.src=`assets/units/manmul-upper/${id}-sheet.png`;upperMotionImages.set(id,image);
-}
+const legendaryMotionImages=ManmulLazyImages.lazyImages(Object.keys(legendaryMotionSpecs),id=>`assets/units/legendary/${id}-sheet.png`);
+const upperMotionImages=ManmulLazyImages.lazyImages(Object.keys(upperMotionSpecs),id=>`assets/units/manmul-upper/${id}-sheet.png`);
 function portraitStyle(id){
  if(normalMotionSpecs[id]||magicMotionSpecs[id]||rareMotionSpecs[id]||uniqueMotionSpecs[id]||epicMotionSpecs[id]||legendaryMotionSpecs[id])return bookPortraitStyle(id);
  const upper=!!upperMotionSpecs[id],magic=!!magicMotionSpecs[id],normal=!!normalMotionSpecs[id];
@@ -72,8 +60,7 @@ function drawEnemyDeathEffects(){for(const effect of enemyDeathEffects){let age=
 const unitVisualScales={'노말':1.5,'매직':1.65,'레어':1.8,'유니크':1.95,'에픽':2.1,'레전더리':2.25,'재앙':2.25,'역설':2.25,'천체':2.25};
 function unitVisualScale(unit){return unitVisualScales[types[unit.type]?.grade]||1}
 const gradeAuraFiles={'유니크':'unique','레전더리':'legendary','재앙':'calamity','역설':'paradox','천체':'celestial'};
-const gradeAuraImages={};
-if(typeof Image!=='undefined')for(const [grade,file] of Object.entries(gradeAuraFiles)){const image=new Image();image.src=`assets/effects/manmul-grade-aura/${file}.png`;gradeAuraImages[grade]=image}
+const gradeAuraImages=ManmulLazyImages.lazyImages(Object.keys(gradeAuraFiles),grade=>`assets/effects/manmul-grade-aura/${gradeAuraFiles[grade]}.png`);
 function drawUnitGradeBase(unit){
  const color=gradeColors[types[unit.type].grade]||'#d9e3dc',scale=unitVisualScale(unit),rx=13*scale,ry=rx*.38,cy=(normalMotionSpecs[unit.type]||magicMotionSpecs[unit.type]||rareMotionSpecs[unit.type]||uniqueMotionSpecs[unit.type]||epicMotionSpecs[unit.type]||legendaryMotionSpecs[unit.type])?unit.y+(PIXEL_UNIT_BASELINE+1-24)*PIXEL_UNIT_SCALE-2:unit.y+5+44*scale*.15,picked=selected.includes(unit.id);
  ctx.save();ctx.beginPath();ctx.ellipse(unit.x,cy,rx,ry,0,0,Math.PI*2);
@@ -83,7 +70,7 @@ function drawUnitGradeBase(unit){
  ctx.restore();
 }
 function drawUnitGradeAura(unit){
- const image=gradeAuraImages[types[unit.type].grade];
+ const image=gradeAuraImages.get(types[unit.type].grade);
  if(!image||!image.complete||!image.naturalWidth)return;
  const size=44*unitVisualScale(unit),alpha=.72+.08*Math.sin(combatTime*2+unit.id);
  ctx.save();ctx.imageSmoothingEnabled=false;ctx.globalAlpha=alpha;
@@ -675,6 +662,9 @@ canvas.addEventListener('dblclick',e=>{if(spectate||ended||paused||e.button!==0)
 canvas.addEventListener('contextmenu',e=>e.preventDefault());canvas.addEventListener('pointerdown',e=>{if(spectate){if(e.button===0)spectatePick(pos(e));return}if(ended||paused||introRemaining>0)return;let p=pos(e);if(e.button===2){let group=units.filter(u=>selected.includes(u.id));issueMove(group,p);return}if(e.button===0)drag={x:p.x,y:p.y,end:p,shift:e.shiftKey,ctrl:e.ctrlKey}});canvas.addEventListener('pointermove',e=>{if(drag)drag.end=pos(e)});addEventListener('pointerup',e=>{if(!drag)return;let p=pos(e),a=drag;drag=null;let found;if(Math.hypot(p.x-a.x,p.y-a.y)<6){let u=[...units].reverse().find(u=>Math.hypot(u.x-p.x,u.y-p.y)<types[u.type].radius+5);found=u?[u.id]:[]}else{let x1=Math.min(a.x,p.x),x2=Math.max(a.x,p.x),y1=Math.min(a.y,p.y),y2=Math.max(a.y,p.y);found=units.filter(u=>u.x>=x1&&u.x<=x2&&u.y>=y1&&u.y<=y2).map(u=>u.id)}if(a.ctrl&&Math.hypot(p.x-a.x,p.y-a.y)<6){if(found.length){let id=found[0];selected=selected.includes(id)?selected.filter(value=>value!==id):[...selected,id];selectedEnemy=null}updateUI();return}selectedEnemy=null;if(!found.length&&Math.hypot(p.x-a.x,p.y-a.y)<6){let enemy=[...enemies].reverse().find(e=>{let q=pathPoint(e.d);return Math.hypot(q.x-p.x,q.y-p.y)<(e.kind==='boss'?18:12)});if(enemy)selectedEnemy=enemy.id}selected=a.shift?[...new Set([...selected,...found])]:found;updateUI()});
 $('#summon').title=`노말 소환 ${summonCost}골드 · ${rosterData.units.filter(u=>u.grade==='N').map(u=>u.name).join('·')} 각 ${(100/rosterData.units.filter(u=>u.grade==='N').length).toFixed(2)}%`;$('#menuButton').onclick=openBattleMenu;$('#speed').onclick=()=>{if(typeof Multiplayer==='object'&&Multiplayer.syncActive){Multiplayer.cycleSpeedRequest();return}gameSpeed=gameSpeed%3+1;$('#speed').textContent=`X${gameSpeed}`};$('#rewardButton').onclick=showReward;$('#summon').onclick=summon;$('#upgrades').onclick=openUpgrades;$('#recipes').onclick=()=>openRecipes();$('#next').onclick=()=>{if(canAdvanceStage()){revealTime=0;startWave()}};addEventListener('keydown',e=>{if(e.target?.closest?.('input,textarea'))return;if(spectate&&!inLobby){if(e.key==='Escape')stopSpectate();return}if(e.repeat||inLobby||introRemaining>0)return;let k=e.key.toLowerCase();if(k==='escape'){if(!$('#modal').classList.contains('hidden')&&!ended&&$('#begin'))return;if(!$('#modal').classList.contains('hidden')&&!ended)closeModal();else openBattleMenu();return}if(!$('#modal').classList.contains('hidden'))return;if(k==='q')summon();if(k==='w')openUpgrades();if(k==='e')openRecipes();if(k==='r'&&selected.length===1){let u=units.find(u=>u.id===selected[0]);if(u)openRecipes(u.type,true)}if(k==='d'&&selected.length===1)convertUnit(selected[0]);if(k==='s')units.filter(u=>selected.includes(u.id)).forEach(u=>{u.tx=u.x;u.ty=u.y;u.stuckTime=0;u.bestDistance=0})});
 updateUI();initLobby();retryFromSession();
+// Once the title is up, fetch the remaining unit art in the background and show progress in the title footer.
+function startAssetWarmup(){let label=$('#hubAssetLoad');ManmulLazyImages.onProgress((done,total)=>{if(!label)return;label.textContent=done>=total?'그림 준비 완료':`그림 받는 중 ${Math.floor(done/Math.max(1,total)*100)}%`;label.classList.toggle('is-done',done>=total)});ManmulLazyImages.warm()}
+if(typeof setTimeout==='function')setTimeout(startAssetWarmup,1200);
 function renderDifficultyRecord(){let id=Object.hasOwn(difficulties,$('#difficultySelect').value)?$('#difficultySelect').value:'normal',records={};try{records=JSON.parse(localStorage.getItem('rift-record')||'{}').byDifficulty||{}}catch(e){}let d=records[id]||{},plays=Number.isInteger(d.plays)&&d.plays>=0?d.plays:0,wins=Number.isInteger(d.wins)&&d.wins>=0?d.wins:0,best=Number.isInteger(d.best)&&d.best>=0?d.best:0;$('#hubDifficultyRecord').textContent=`${difficulties[id].name} · ${plays}전 ${wins}승${plays?' · 클리어율 '+Math.round(wins/plays*100)+'%':''} · 최고 ${best}라운드`}
 function renderLobby(){if(typeof ManmulSave==='object')ManmulSave.renderLobby();
  $('#hubShards').textContent=progression.shards;

@@ -1,10 +1,6 @@
 'use strict';
 // The six sheet cells are cast, launch, two flight poses and two impact poses.
-const normalBasicFxImages=new Map(),normalBasicProjectiles=[];
-for(let i=1;i<=7;i++)if(typeof Image!=='undefined'){
- const id=`N${String(i).padStart(3,'0')}`,image=new Image();
- image.src=`assets/effects/manmul-normal-basic/${id}-effect-sheet.png`;normalBasicFxImages.set(id,image);
-}
+const normalBasicFxImages=ManmulLazyImages.lazyImages(Array.from({length:7},(_,i)=>`N${String(i+1).padStart(3,"0")}`),id=>`assets/effects/manmul-normal-basic/${id}-effect-sheet.png`),normalBasicProjectiles=[];
 const normalBasicCast=.18,normalBasicFlight=.30,normalBasicImpact=.20;
 function startNormalBasic(unit,target,point){
  const dx=point.x-unit.x,dy=point.y-unit.y,length=Math.hypot(dx,dy)||1;

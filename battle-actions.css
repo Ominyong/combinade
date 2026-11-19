@@ -33,8 +33,8 @@
 .toast { top: 75px; padding: 5px 10px; background: #14242ded; border: 1px solid #c6a7619c; border-radius: 5px; }
 
 
-@font-face { font-family: "Galmuri HUD"; src: url("assets/fonts/galmuri/Galmuri11.ttf") format("truetype"); font-weight: 400; font-display: swap; }
-@font-face { font-family: "Galmuri HUD"; src: url("assets/fonts/galmuri/Galmuri11-Bold.ttf") format("truetype"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Galmuri HUD"; src: url("assets/fonts/galmuri/Galmuri11.woff2") format("woff2"), url("assets/fonts/galmuri/Galmuri11.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Galmuri HUD"; src: url("assets/fonts/galmuri/Galmuri11-Bold.woff2") format("woff2"), url("assets/fonts/galmuri/Galmuri11-Bold.ttf") format("truetype"); font-weight: 700; font-display: swap; }
 .hud-stat strong, .actions .battle-action strong, .unit-header strong, .goal-heading strong { font-family: "Galmuri HUD", "Malgun Gothic", sans-serif; }
 .modal .panel { background: var(--hud-panel); border-color: var(--hud-edge); color: var(--hud-text); }
 .modal button, .selected button:not(.portrait):not(.skill-icon), .goal-tracker button { background: #29453f; border-color: #789f90; color: var(--hud-text); }

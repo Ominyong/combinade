@@ -117,3 +117,7 @@ body:has(#lobby:not(.hidden))::before { content: ''; position: fixed; inset: 0; 
 /* 로비 설정 창 */
 .lobby-settings { display: flex; flex-direction: column; gap: 8px; }
 .lobby-settings .setting-row { padding: 4px 0; }
+
+/* 뒤에서 그림 받는 진행 상황 (타이틀 왼쪽 아래) */
+.hub-asset-load { margin-left: 12px; letter-spacing: .04em; color: #b0a891; }
+.hub-asset-load.is-done { color: #7fcf8a; }
