@@ -823,3 +823,109 @@ body:has(#modal:not(.hidden)) .toast { top: auto; bottom: 24px; }
 .card-set.is-on { border-color: var(--fam); background: color-mix(in srgb, var(--fam) 16%, #0f1a1a); }
 .card-set.is-on small { color: #e6fff6; }
 .reward-owned { color: #cfdcd6; }
+
+/* ---- Missions (임무) and mid-boss bounty (현상금 수배): left column of the battle HUD. ---- */
+.mission-panel { top: 83px; left: 16px; width: 250px; display: flex; flex-direction: column; gap: 6px; padding: 0; background: none !important; border: 0 !important; box-shadow: none !important; pointer-events: none; }
+body:has(#multiBoard:not(.hidden)) .mission-panel { top: 330px; }
+.mission-card, .bounty-card { padding: 7px 10px 8px; background: var(--hud-bg, #0d1a1a); border: 2px solid #6d5a39; box-shadow: 0 0 0 2px #070b0b, 0 5px 16px #0008; color: #e7dec7; font-size: 12px; }
+.mission-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+.mission-head b { font-size: 13px; color: #f0cb82; }
+.mission-head small { font-size: 11px; color: #a59d86; }
+.mission-card p, .bounty-card p { margin: 4px 0; line-height: 1.4; }
+.mission-bar { position: relative; height: 14px; background: #0a1011; border: 1px solid #3a4540; }
+.mission-bar i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(#8fd6a0 0 50%, #5aa872 50%); }
+.mission-bar span { position: relative; display: block; text-align: center; font-size: 10px; line-height: 12px; color: #fff; text-shadow: 1px 1px 0 #000; }
+.mission-reward { display: block; margin-top: 4px; color: #c9b88f; font-size: 11px; }
+.mission-card.is-done { border-color: #5aa872; }
+.mission-card.is-done p { color: #8fd6a0; text-decoration: line-through; }
+.bounty-card { border-color: #c4553f; background: linear-gradient(#2a1612, #160e0c) !important; }
+.bounty-card .mission-head b { color: #ff9b7a; }
+.bounty-card p b { color: #fff3cf; font-size: 14px; }
+.bounty-tiers { display: grid; grid-template-columns: repeat(3,1fr); gap: 3px; margin-top: 5px; }
+.bounty-tiers span { padding: 1px 0; text-align: center; border: 1px solid #4a3a30; color: #6f625a; font-size: 11px; }
+.bounty-tiers span.is-past { text-decoration: line-through; }
+.bounty-tiers span.is-on { color: #14100a; font-weight: 700; }
+.bounty-card.is-gold .bounty-tiers span.is-on { background: #f4d06f; border-color: #f4d06f; }
+.bounty-card.is-silver .bounty-tiers span.is-on { background: #cfd8dc; border-color: #cfd8dc; }
+.bounty-card.is-bronze .bounty-tiers span.is-on { background: #c88a5a; border-color: #c88a5a; }
+
+/* Mission board (미션): compact card on the left HUD, full checklist in a modal. */
+.mission-panel { pointer-events: none; }
+.mission-panel .mission-card { pointer-events: auto; display: block; width: 100%; text-align: left; cursor: pointer; font: inherit; }
+.mission-panel .mission-card:hover { border-color: #f0cb82; }
+.mission-near { list-style: none; margin: 5px 0 0; padding: 0; display: grid; gap: 4px; }
+.mission-near li { display: grid; grid-template-columns: 1fr 86px; align-items: center; gap: 6px; font-size: 11px; color: #d7cfb9; }
+.mission-near em, .mission-row em { font-style: normal; color: #ff9b7a; }
+.modal .panel:has(.mission-modal) { width: min(1140px,1440px); }
+.mission-group { display: flex; align-items: baseline; gap: 8px; margin: 10px 0 6px; font-size: 14px; color: #f0cb82; }
+.mission-group small { color: #a59d86; font-size: 12px; }
+.mission-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; }
+.mission-row { display: grid; grid-template-columns: 24px 1fr 90px 104px; align-items: center; gap: 10px; padding: 6px 10px; border: 1px solid #2f3d39; background: #0f1718; }
+.mission-row.is-hidden { grid-template-columns: 24px 1fr 104px; }
+.mission-row.is-hidden:not(.is-done) { background: repeating-linear-gradient(135deg, #12191a 0 8px, #0f1617 8px 16px); }
+.mission-row.is-done { grid-template-columns: 24px 1fr 104px; border-color: #3f6b4c; background: #122019; }
+.mission-mark { display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; border: 1px solid #4a4434; color: #f0cb82; font-weight: 700; }
+.mission-row.is-done .mission-mark { background: #5aa872; border-color: #5aa872; color: #0b140e; }
+.mission-row.is-expired { opacity: .5; }
+.mission-text strong { display: block; font-size: 13px; color: #f2e6c6; }
+.mission-text small { font-size: 11px; color: #a9b3ad; }
+.mission-row .mission-reward { text-align: right; font-size: 11px; color: #c9b88f; }
+.mission-row.is-done .mission-reward { color: #8fd6a0; }
+
+/* 현상금 사냥: HUD card while hunting and the summon window. Portraits are placeholders until the art is drawn. */
+.hunt-hud { padding: 7px 10px 8px; background: linear-gradient(#24160f, #140d0a); border: 2px solid var(--hunt); box-shadow: 0 0 0 2px #070b0b, 0 5px 16px #0008; color: #e7dec7; font-size: 11px; }
+.hunt-hud .mission-head b { color: var(--hunt); }
+.hunt-hud .mission-head small { font-size: 13px; color: #fff3cf; }
+.hunt-hud .mission-head small.is-urgent { color: #ff7a6a; }
+.hunt-hp { height: 10px; margin: 5px 0 4px; background: #1a1212; border: 1px solid #050808; }
+.hunt-hp i { display: block; height: 100%; background: linear-gradient(#e6655a 0 50%, #b8392f 50%); }
+.modal .panel:has(.hunt-modal) { width: min(1040px,1440px); }
+.hunt-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; }
+.hunt-card { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 12px 12px; border: 2px solid color-mix(in srgb, var(--hunt) 60%, #000); background: linear-gradient(170deg, color-mix(in srgb, var(--hunt) 16%, #101a1b), #0d1415 60%); }
+.hunt-card.is-locked { opacity: .5; filter: grayscale(.6); }
+.hunt-card.is-ready { box-shadow: 0 0 14px color-mix(in srgb, var(--hunt) 35%, transparent); }
+.hunt-portrait { width: 84px; height: 84px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 3px solid var(--hunt); background: radial-gradient(circle at 40% 35%, #2a3536, #0c1314); color: var(--hunt); font-size: 36px; font-weight: 700; box-shadow: 0 0 0 3px #070b0b; }
+.hunt-tier { color: var(--hunt); font-size: 12px; letter-spacing: 1px; }
+.hunt-tier span { margin-left: 6px; color: #a59d86; letter-spacing: 0; }
+.hunt-name { font-size: 20px; color: #f6e7c0; }
+.hunt-stats { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; width: 100%; margin: 4px 0; font-size: 12px; }
+.hunt-stats dt { color: #8d8167; }
+.hunt-stats dd { margin: 0; text-align: right; color: #e7dec7; }
+.hunt-reward { width: 100%; margin: 0; padding: 6px 8px; border: 1px solid #6d5a3966; background: #0c1314; font-size: 12px; line-height: 1.4; color: #f0cb82; text-align: center; }
+.hunt-reward small { display: block; color: #8d8167; font-size: 10px; }
+.hunt-card button { width: 100%; margin-top: auto; }
+#huntButton.has-ready { border-color: #f0cb82; color: #fff3cf; box-shadow: 0 0 10px #f0cb8266; }
+
+/* ---- 표식 (marks): one colour + one letter per mark everywhere (enemy icons, chips, codex, guide). ---- */
+.mark-chip { display: inline-flex; align-items: center; gap: 3px; margin: 0 3px 0 0; padding: 0 6px 0 2px; border: 1px solid var(--mark); border-radius: 3px; background: color-mix(in srgb, var(--mark) 18%, #0c1314); color: #f2ece0; font-size: 11px; line-height: 16px; white-space: nowrap; vertical-align: middle; }
+.mark-chip i { display: inline-flex; align-items: center; justify-content: center; width: 13px; height: 13px; background: var(--mark); color: #fff; font-style: normal; font-size: 9px; font-weight: 700; }
+.mark-chip.is-any { --mark: #8d8167; padding-left: 6px; }
+.role-tags .mark-chip { margin-left: 2px; }
+.codex-marks { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 6px; }
+.codex-marks-label { margin-right: 4px; font-size: 12px; color: #a59d86; }
+.modal button.codex-chip.mark-filter { display: inline-flex; align-items: center; gap: 4px; border-color: color-mix(in srgb, var(--mark) 60%, #000); }
+.modal button.codex-chip.mark-filter i { width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; background: var(--mark); color: #fff; font-style: normal; font-size: 9px; }
+.modal button.codex-chip.mark-filter[aria-pressed="true"] { background: color-mix(in srgb, var(--mark) 35%, #0c1314); border-color: var(--mark); color: #fff; }
+.modal button.codex-chip.codex-guide { margin-left: 6px; border-style: dashed; }
+.codex-markrole { position: absolute; left: 3px; bottom: 3px; padding: 0 4px; border-radius: 3px; background: var(--mark); color: #fff; font-size: 10px; }
+.codex-markinfo h3 { display: flex; align-items: center; gap: 6px; }
+.mark-lines p { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 3px 0; font-size: 12px; }
+.mark-lines b { min-width: 30px; color: #c9b88f; }
+.mark-lines small { color: #8fa79f; }
+.mark-reaction { padding: 0 6px; border: 1px solid #f0cb82; color: #fff3cf; font-size: 11px; }
+.modal .panel:has(.mark-guide) { width: min(960px,1440px); }
+.mark-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+.mark-card { padding: 8px 10px; border: 1px solid color-mix(in srgb, var(--mark) 55%, #000); border-left: 4px solid var(--mark); background: #0f1718; }
+.mark-card-head { display: flex; align-items: center; gap: 6px; }
+.mark-card-head i { width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; background: var(--mark); color: #fff; font-style: normal; font-size: 11px; font-weight: 700; }
+.mark-card-head strong { font-size: 15px; color: #f6e7c0; }
+.mark-card p { margin: 4px 0; font-size: 12px; color: #c9d6cf; line-height: 1.4; }
+.modal .mark-card-links button { padding: 2px 8px; font-size: 11px; }
+.reaction-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+.reaction-list li { display: grid; grid-template-columns: auto auto auto 1fr; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid #2f3d39; background: #0f1718; font-size: 12px; }
+.reaction-recipe { display: inline-flex; align-items: center; gap: 2px; }
+.reaction-recipe > b { color: #8d8167; margin: 0 2px; }
+.reaction-hit { padding: 0 5px; border: 1px dashed #a59d86; color: #e7dec7; font-size: 11px; }
+.reaction-arrow { color: #8d8167; }
+.reaction-list strong { color: #f0cb82; }
+.reaction-list small { color: #a9b3ad; }

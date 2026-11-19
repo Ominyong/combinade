@@ -30,7 +30,7 @@
   adapt:{name:'균열 적응',family:'relic',rarity:'rare',icon:'적',effect:'relic',max:1,description:'이후 등장하는 적이 받는 전장 테마 압박 35% 감소'},
   gold:{name:'전술 보급',family:'economy',rarity:'common',icon:'금',effect:'gold',factor:1,max:Infinity,description:'즉시 골드 (라운드가 높을수록 많음)'},
   warchest:{name:'군자금',family:'economy',rarity:'rare',icon:'자',effect:'gold',factor:2.2,max:Infinity,description:'즉시 골드 (전술 보급의 2배 이상)'},
-  bounty:{name:'현상금',family:'economy',rarity:'common',icon:'현',effect:'relic',max:1,description:'일반 몬스터를 처치할 때 25% 확률로 골드 +1'},
+  bounty:{name:'약탈',family:'economy',rarity:'common',icon:'약',effect:'relic',max:1,description:'일반 몬스터를 처치할 때 25% 확률로 골드 +1'},
   interest:{name:'균열 이자',family:'economy',rarity:'rare',icon:'이',effect:'relic',max:1,description:'라운드 시작마다 보유 골드의 10%를 추가로 받습니다(최대 15)'},
   convert:{name:'변환 숙련',family:'economy',rarity:'common',icon:'변',effect:'relic',max:1,description:'같은 등급 변환 비용 50% 감소'},
   elite:{name:'정예 소환',family:'summon',rarity:'rare',icon:'정',effect:'relic',max:1,description:'소환할 때 10% 확률로 매직 유닛이 나옵니다'},

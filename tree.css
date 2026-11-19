@@ -11,11 +11,13 @@ body.tree-open .hub-menu, body.tree-open .hub-profile-panel { visibility: hidden
 .tree-head { position: relative; height: 128px; flex: none; }
 .tree-back { position: absolute; left: 24px; top: 18px; padding: 8px 18px; border: 2px solid #b69a64; border-radius: 20px; background: #0f1b1c; color: #f0e3c4; font-size: 16px; }
 .tree-back:hover { background: #1d2f2f; }
-.tree-close { position: absolute; right: 24px; top: 16px; width: 40px; height: 40px; border: 2px solid #b69a64; border-radius: 50%; background: #0f1b1c; color: #f0e3c4; font-size: 24px; line-height: 1; }
+.tree-close { position: absolute; right: 24px; top: 18px; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center; box-sizing: border-box; border: 2px solid #b69a64; border-radius: 50%; background: #0f1b1c; color: #f0e3c4; }
+.tree-close svg { width: 14px; height: 14px; display: block; }
+.tree-close:hover { background: #1d2f2f; color: #fff3cf; border-color: #f0cb82; }
 .tree-title { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); margin: 0; padding: 6px 48px 8px; display: flex; flex-direction: column; align-items: center;
   background: linear-gradient(#2a2418, #191610); border: 2px solid #b69a64; box-shadow: 0 0 0 3px #0a0d0d, 0 6px 18px #000a; font-size: 28px; color: #f6e7c0; letter-spacing: 4px; }
 .tree-title small { font-size: 11px; letter-spacing: 2px; color: var(--cat); }
-.tree-balance { position: absolute; right: 80px; top: 20px; display: flex; align-items: center; gap: 8px; padding: 6px 14px; border: 2px solid #6d5a39; border-radius: 18px; background: #0f1718; font-size: 14px; color: #d8cba8; }
+.tree-balance { position: absolute; right: 80px; top: 18px; height: 40px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 0 16px; border: 2px solid #b69a64; border-radius: 20px; background: #0f1718; font-size: 14px; color: #d8cba8; }
 .tree-balance span { color: #f4d06f; }
 .tree-balance strong { font-size: 20px; color: #fff3cf; }
 .tree-tabs { position: absolute; left: 0; right: 0; bottom: 8px; display: flex; justify-content: center; gap: 10px; }
