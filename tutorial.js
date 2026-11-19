@@ -34,6 +34,7 @@ const ManmulTutorial=(()=>{
   {id:'hunt',when:()=>wave>=2&&typeof huntReadyCount==='function'&&huntReadyCount()>0,title:'현상금 사냥',text:'오른쪽 위 <b>현상금</b> 버튼으로 현상금 보스를 직접 불러낼 수 있습니다. 제한 시간 안에 잡으면 골드·선택권을 받고, 놓치면 도망칩니다. 전력에 여유가 있을 때 부르세요.'},
   {id:'mission',when:()=>wave>=3&&typeof missionList==='object',title:'미션',text:'왼쪽 <b>미션</b> 카드에 거의 다 된 미션이 보입니다. 조건을 채우는 순간 보상을 바로 받고, 카드를 누르면 전체 목록과 받은 보상을 볼 수 있습니다.'},
   {id:'marks',when:()=>wave>=3&&markedEnemy(),title:'표식',text:'적 머리 위 <b>색 네모</b>가 표식입니다. 표식이 붙은 적을 다른 공격으로 때리면 반응이 터집니다. 도감(E)의 <b>표식</b> 버튼으로 붙이는 유닛·활용하는 유닛을 찾고, 「표식·반응 안내」에서 조합을 볼 수 있습니다.'},
+  {id:'box',when:()=>typeof runBoxes==='object'&&runBoxes.length>0,title:'조각 상자',text:'몬스터가 <b>조각 상자</b>를 떨어뜨렸습니다. 상자는 게임이 끝날 때(이기든 지든) 열리고, 유닛 조각이 모이면 그 유닛의 <b>성급</b>이 올라 공격력이 조금씩 늘어납니다. 한 판에 최대 5개까지 얻습니다.'},
   {id:'hunt2',when:()=>huntOpen('gosichu'),title:'새 현상금 보스',text:()=>huntText('gosichu')},
   {id:'hiddenMission',when:()=>missionDone(true),title:'히든 미션 발견!',text:'조건이 숨겨진 <b>히든 미션</b>을 달성했습니다. 미션 목록의 <b>???</b> 칸에 아직 찾지 못한 히든 미션이 남아 있습니다.'},
   {id:'hunt3',when:()=>huntOpen('hubii'),title:'새 현상금 보스',text:()=>huntText('hubii')},

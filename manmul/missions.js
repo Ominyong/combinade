@@ -21,7 +21,7 @@ function currentWave(){try{return wave}catch(e){return 1}}
 function huntBoss(id){return huntBosses.find(b=>b.id===id)}
 // 계승의 나무 「추적술」·「덫 놓기」
 function huntCooldownOf(b){return Math.round(b.cooldown*(1-treeBonus('huntCooldown')))}
-function huntTimeOf(b){return b.time+treeBonus('huntTime')}
+function huntTimeOf(b){return Math.max(15,b.time+treeBonus('huntTime')+riftActiveMods().huntTime)}
 function huntActive(id){return enemies.find(e=>e.bountyId===id&&e.hp>0)||null}
 function huntCooldownLeft(id){return Math.max(0,(hunt.ready[id]||0)-combatTime)}
 function huntState(b){if(currentWave()<Math.max(1,b.from))return 'locked';if(huntActive(b.id))return 'active';if(huntCooldownLeft(b.id)>0)return 'cooldown';return 'ready'}
@@ -51,7 +51,7 @@ function huntCardHtml(b){let st=huntState(b),w=currentWave(),cd=Math.ceil(huntCo
  <dl class="hunt-stats"><dt>체력</dt><dd>${st==='locked'?'?':huntHpPreview(b).toLocaleString()}</dd><dt>제한 시간</dt><dd>${huntTimeOf(b)}초</dd><dt>재소환</dt><dd>${huntCooldownOf(b)}초</dd><dt>처치</dt><dd>${hunt.kills[b.id]||0}회</dd></dl>
  <p class="hunt-reward"><small>현상금</small>${huntRewardText(b,w)}</p>${btn}</div>`}
 // A pending boss reward or the theme pick must be answered first; these windows never cover it.
-function missionWindowBlocked(){if(pendingRewards.length){showReward();return true}return !!themePending}
+function missionWindowBlocked(){if(pendingRewards.length){showReward();return true}if(eventState.pending){showRunEvent();return true}return !!themePending}
 function openHunt(){if(inLobby||ended||missionWindowBlocked())return;if($('#modal').classList.contains('hidden')){missionPrevPause=paused;if(!multiActive())paused=true}
  $('#modalContent').innerHTML=`${modalOpen({eyebrow:'BOUNTY HUNT',title:'현상금 사냥',close:'현상금 사냥 닫기',variant:'hunt-modal'})}<p class="ui-modal-lead">전력이 충분하다 싶으면 현상금 보스를 불러내 잡으세요. 제한 시간 안에 처치하면 현상금을 받고, 놓치면 도망칩니다. 소환은 무료지만 보스마다 재소환 시간이 있습니다.</p><div class="hunt-grid">${huntBosses.map(huntCardHtml).join('')}</div>${modalClose('<button class="ui-btn-primary" onclick="closeMissions()">닫기</button>')}`;$('#modal').classList.remove('hidden')}
 
@@ -119,7 +119,7 @@ function missionEvent(type,data){if(inLobby)return;let c=mc(),f=mf();
  else if(type==='roundStart'){if(currentWave()>1&&enemies.length>=85)f.edge=true}
  else if(type==='tick'){if(combatTime-(missionState.lastTick||0)<.5)return;missionState.lastTick=combatTime}
  missionCheck()}
-function missionTick(){huntTick();updateHuntButton();missionEvent('tick')}
+function missionTick(){huntTick();updateHuntButton();eventMaybeShow();missionEvent('tick')}
 // Right-panel button shows how many bounty bosses can be summoned right now.
 let huntButtonKey='';
 function updateHuntButton(){let b=typeof document!=='undefined'?$('#huntButton'):null;if(!b)return;let n=inLobby?0:huntReadyCount(),key=String(n);if(key===huntButtonKey)return;huntButtonKey=key;b.textContent=n?`현상금 ${n}`:'현상금';b.classList.toggle('has-ready',n>0)}
@@ -131,7 +131,7 @@ function renderMissionHud(force=false){let box=typeof document!=='undefined'?$('
  let hunting=enemies.filter(e=>e.bountyId&&e.hp>0),near=missionNearest(),key=JSON.stringify([near.map(x=>[x.m.id,x.cur]),hunting.map(e=>[e.id,Math.ceil(e.hp/e.max*50),Math.ceil(e.expireAt-combatTime)]),missionDoneCount()]);if(!force&&key===missionHudKey)return;missionHudKey=key;box.classList.remove('hidden');
  let b=hunting.length?`<div class="hunt-hud"><div class="mission-head"><b>현상금 사냥</b><small>${hunting.length>1?hunting.length+'마리':''}</small></div>${hunting.map(e=>{let boss=huntBoss(e.bountyId),left=Math.max(0,Math.ceil(e.expireAt-combatTime));return `<div class="hunt-row" style="--hunt:${boss.color}" title="${huntRewardText(boss,e.bountyWave)}"><b>${boss.name}</b><span class="hunt-hp"><i style="width:${Math.max(0,e.hp/e.max*100).toFixed(1)}%"></i></span><small class="${left<=10?'is-urgent':''}">${left}초</small></div>`}).join('')}${hunting.length===1?`<small class="hunt-reward-line">${huntRewardText(huntBoss(hunting[0].bountyId),hunting[0].bountyWave)}</small>`:''}</div>`:'';
  let rows=near.map(({m,cur,max})=>`<li><span>${m.name}${m.before?` <em>${m.before}R 전</em>`:''}</span><span class="mission-bar"><i style="width:${Math.min(100,cur/max*100).toFixed(0)}%"></i><span>${Math.min(cur,max)}/${max}</span></span></li>`).join('');
- let m=`<button type="button" class="mission-card" onclick="openMissions()"><div class="mission-head"><b>미션</b><small>${missionDoneCount()}/${missionList.length} 달성 · 눌러서 전체 보기</small></div>${rows?`<ul class="mission-near">${rows}</ul>`:''}${missionState.order.length?(()=>{let id=missionState.order[missionState.order.length-1],m=missionById(id);return m?`<p class="mission-last">최근 달성 <b>${m.name}</b> · ${missionState.got?.[id]||missionRewardText(m.reward)}</p>`:''})():''}</button>`;
+ let m=`<button type="button" class="mission-card" onclick="openMissions()"><div class="mission-head"><b>미션</b><small>${missionDoneCount()}/${missionList.length} 달성${typeof runBoxes==='object'&&runBoxes.length?` · 상자 ${runBoxes.length}`:''} · 눌러서 전체 보기</small></div>${rows?`<ul class="mission-near">${rows}</ul>`:''}${missionState.order.length?(()=>{let id=missionState.order[missionState.order.length-1],m=missionById(id);return m?`<p class="mission-last">최근 달성 <b>${m.name}</b> · ${missionState.got?.[id]||missionRewardText(m.reward)}</p>`:''})():''}</button>`;
  box.innerHTML=b+m}
 // ---- full list (modal) ----
 function missionRowHtml(m){let done=missionState.done[m.id],expired=missionExpired(m),secret=m.hidden&&!done,[cur,max]=m.progress();

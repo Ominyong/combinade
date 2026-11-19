@@ -18,7 +18,7 @@ const inMulti=()=>{let on=typeof Multiplayer==='object'&&Multiplayer.started;if(
  function capture(){return {v:VERSION,at:Date.now(),difficulty:selectedDifficultyId,theme:currentTheme,
   wave,maxWave,gold,combatTime,spawnLeft,spawnTimer,spawnInterval,waveTimer,preparation,uid,enemyId,revealTime,minibossSpawned,minibossCleared,
   units:clone(units),enemies:clone(enemies),upcomingBoss:clone(upcomingBoss),pendingRewards:clone(pendingRewards),
-  gradeLevels:clone(gradeLevels),runLevels:clone(runLevels),runRelics:clone(runRelics),runCards:clone(runCards),missionState:clone(missionState),hunt:clone(hunt),selectionTickets:clone(selectionTickets),
+  gradeLevels:clone(gradeLevels),runLevels:clone(runLevels),runRelics:clone(runRelics),runCards:clone(runCards),missionState:clone(missionState),hunt:clone(hunt),riftLevel:runRiftLevel,eventState:clone(eventState),runBoxes:clone(runBoxes),selectionTickets:clone(selectionTickets),
   bossBag:clone(bossBag),bossBagTheme,lastBossId,lastBossAbility,supportUses:clone(supportUses),loanRounds,loanRemaining,
   runStats:clone(runStats),record:clone(ManmulRecords.run),goalUnit}}
  function save(){if(!savable())return false;try{localStorage.setItem(KEY,JSON.stringify(capture()));return true}catch(e){return false}}
@@ -31,12 +31,12 @@ const inMulti=()=>{let on=typeof Multiplayer==='object'&&Multiplayer.started;if(
  const fill=(target,source)=>{if(!target||!source)return;for(const k of Object.keys(target))if(!(k in source))delete target[k];Object.assign(target,source)};
  // 저장을 게임 전역에 되돌린다(싱글·멀티 공통).
  function applyState(s){
-  selectedDifficultyId=s.difficulty;selectedDifficulty=difficulties[s.difficulty];maxWave=s.maxWave||selectedDifficulty.rounds;inLobby=false;
+  selectedDifficultyId=s.difficulty;runRiftLevel=Number.isInteger(s.riftLevel)?s.riftLevel:0;selectedDifficulty=riftDifficulty(difficulties[s.difficulty],runRiftLevel);maxWave=s.maxWave||selectedDifficulty.rounds;inLobby=false;
   if(s.record)ManmulRecords.restoreRun(s.record);else ManmulRecords.beginRun({difficulty:s.difficulty});
   $('#lobby').classList.add('hidden');document.body?.classList.remove('arena-intro');introRemaining=0;introThemeQueued=false;themePending=false;currentTheme=s.theme;
   ({wave,gold,combatTime,spawnLeft,spawnTimer,spawnInterval,waveTimer,preparation,revealTime,minibossSpawned,minibossCleared,lastBossId,lastBossAbility,loanRounds,loanRemaining,goalUnit}=s);
   bossBag=s.bossBag||[];bossBagTheme=s.bossBagTheme??null;upcomingBoss=s.upcomingBoss||null;pendingRewards=s.pendingRewards||[];
-  fill(gradeLevels,s.gradeLevels);fill(runLevels,s.runLevels);fill(runRelics,s.runRelics||{});runCards=Array.isArray(s.runCards)?s.runCards.filter(id=>ManmulCards.cards[id]||id==='__start'):[];missionState={...freshMissionState(),...(s.missionState||{})};missionState.count={...freshMissionState().count,...(s.missionState?.count||{})};hunt={...freshHunt(),...(s.hunt||{})};selectionTickets={normal:0,magic:0,...(s.selectionTickets||{})};fill(supportUses,s.supportUses);if(s.runStats)fill(runStats,s.runStats);
+  fill(gradeLevels,s.gradeLevels);fill(runLevels,s.runLevels);fill(runRelics,s.runRelics||{});runCards=Array.isArray(s.runCards)?s.runCards.filter(id=>ManmulCards.cards[id]||id==='__start'):[];missionState={...freshMissionState(),...(s.missionState||{})};missionState.count={...freshMissionState().count,...(s.missionState?.count||{})};hunt={...freshHunt(),...(s.hunt||{})};eventState={...freshEventState(),...(s.eventState||{})};runBoxes=Array.isArray(s.runBoxes)?s.runBoxes.filter(gr=>boxDefs[gr]).slice(0,starRules.maxBoxesPerRun):[];runBoxResults=null;eventState.bonus={...freshEventState().bonus,...(s.eventState?.bonus||{})};selectionTickets={normal:0,magic:0,...(s.selectionTickets||{})};fill(supportUses,s.supportUses);if(s.runStats)fill(runStats,s.runStats);
   units=[];for(const saved of s.units){if(!types[saved.type])continue;let u={...saved};v5Combat.prepareUnit(u,combatTime);Object.assign(u,saved);units.push(u);skillFxPreload(u.type)}
   enemies=s.enemies.filter(e=>e&&Number.isFinite(e.hp)&&e.hp>0);uid=Math.max(s.uid||0,...units.map(u=>u.id));enemyId=Math.max(s.enemyId||0,...enemies.map(e=>e.id||0));
   // 메뉴가 일시정지를 맡는다: 메뉴를 열면 멈추고, '계속하기'로 닫으면 재개된다.

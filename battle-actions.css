@@ -987,3 +987,20 @@ body:has(#multiBoard:not(.hidden)) .mission-panel .mission-near { display: none;
 .result-chip.is-hunt { border-color: #c4553f; color: #ffb4a6; }
 .result-xp { color: #e7dec7; font-size: 13px; }
 .result-xp b { color: #ffe6a8; }
+.rift-opened { color: #f3a6d8; }
+
+/* 판 중간 이벤트: option cards share the reward-card look; the "pass" card is plain. */
+.modal .panel:has(.run-event) { width: min(900px,1440px); }
+.modal .reward-list.event-cards > button.reward-card { min-height: 190px; }
+.modal .reward-list.event-cards > button.reward-card.is-pass { --fam: #6f7a74 !important; opacity: .85; }
+.modal .reward-list.event-cards > button.reward-card:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.result-chip.is-event { border-color: #e78fc8; color: #ffd7ef; }
+
+/* 성급 and 조각 상자 */
+.star-chip { display: inline-block; margin-right: 4px; padding: 0 4px; border: 1px solid #c9a75c; color: #ffe08a; font-size: 10px; letter-spacing: -1px; vertical-align: middle; }
+.codex-stars .star-row { color: #ffe08a; letter-spacing: -1px; }
+.box-results { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.box-result { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; padding: 4px 8px; border: 1px solid color-mix(in srgb, var(--box) 55%, #000); border-left: 3px solid var(--box); background: #0f1718; font-size: 12px; }
+.box-result b { color: var(--box); }
+.box-result em { font-style: normal; color: #ffe08a; }
+.box-cosmetic { color: #f3a6d8; }

@@ -71,7 +71,7 @@ function treeBonus(key,levels=progression.levels){let sum=0;for(const [id,n] of 
 function treeCardUnlocks(levels=progression.levels){return Object.entries(treeNodes).filter(([id,n])=>n.effect.key==='card'&&(levels[id]||0)>0).map(([,n])=>n.effect.card)}
 function treeEffectLine(id,level){let n=treeNodes[id],e=n.effect;if(e.key==='card'){let c=globalThis.ManmulCards?.cards[e.card];return c?`보상 카드 「${c.name}」 해금`:'보상 카드 해금'}return treeEffectText[e.key]((e.per||0)*level)}
 const progressionSkills=treeNodes;
-function readProgression(){try{let data=JSON.parse(localStorage.getItem(progressionKey)||'{}'),levels={};for(const [id,node] of Object.entries(treeNodes))levels[id]=Math.max(0,Math.min(node.max,Number.isInteger(data.levels?.[id])?data.levels[id]:0));return {shards:Math.max(0,Number.isInteger(data.shards)?data.shards:0),xp:Math.max(0,Number.isInteger(data.xp)?data.xp:0),levels}}catch(e){return {shards:0,levels:Object.fromEntries(Object.keys(treeNodes).map(id=>[id,0]))}}}
+function readProgression(){try{let data=JSON.parse(localStorage.getItem(progressionKey)||'{}'),levels={};for(const [id,node] of Object.entries(treeNodes))levels[id]=Math.max(0,Math.min(node.max,Number.isInteger(data.levels?.[id])?data.levels[id]:0));return {shards:Math.max(0,Number.isInteger(data.shards)?data.shards:0),xp:Math.max(0,Number.isInteger(data.xp)?data.xp:0),rift:{unlocked:Math.max(0,Math.min(10,Number.isInteger(data.rift?.unlocked)?data.rift.unlocked:0)),best:Math.max(0,Math.min(10,Number.isInteger(data.rift?.best)?data.rift.best:0))},levels}}catch(e){return {shards:0,levels:Object.fromEntries(Object.keys(treeNodes).map(id=>[id,0]))}}}
 let progression=readProgression();
 function saveProgression(next){try{localStorage.setItem(progressionKey,JSON.stringify(next));progression=next;return true}catch(e){return false}}
 function purchaseProgression(id){if(!treeNodes[id]||!treeCanBuy(id))return false;let level=progression.levels[id]||0;return saveProgression({...progression,shards:progression.shards-treeCost(id),levels:{...progression.levels,[id]:level+1}})}
@@ -111,14 +111,19 @@ const profileCosmetics={
   miser:{name:'구두쇠'},
   'close-call':{name:'아슬아슬'},
   'one-strike':{name:'일격'},
-  alone:{name:'홀로 선 자'}
+  alone:{name:'홀로 선 자'},
+  'box-hunter':{name:'상자 사냥꾼',box:true},
+  'shard-smith':{name:'조각 장인',box:true},
+  'star-keeper':{name:'별을 모으는 자',box:true}
  },
  icons:{
   basic:{name:'기본 문장',symbol:'◆',color:'#a8d8ae'},
   sprout:{name:'새싹 문장',symbol:'✧',color:'#9fe0a6',unlock:'easy'},
   shield:{name:'방패 문장',symbol:'◈',color:'#8fc1e8',unlock:'normal'},
   blade:{name:'검 문장',symbol:'⚔',color:'#f0a46c',unlock:'hard'},
-  crown:{name:'왕관 문장',symbol:'♛',color:'#f4d06f',unlock:'extreme'}
+  crown:{name:'왕관 문장',symbol:'♛',color:'#f4d06f',unlock:'extreme'},
+  'star-crest':{name:'별 문장',symbol:'★',color:'#ffe08a',box:true},
+  'box-crest':{name:'상자 문장',symbol:'▣',color:'#c9a75c',box:true}
  },
  plates:{
   basic:{name:'기본 이름표'},
@@ -130,10 +135,16 @@ const profileCosmetics={
   blood:{name:'핏빛 이름표'},
   codex:{name:'도감 장정 이름표'},
   rift:{name:'균열 문양 이름표'},
-  flawless:{name:'무결 이름표'}
+  flawless:{name:'무결 이름표'},
+  starry:{name:'별무늬 이름표',box:true},
+  treasure:{name:'보물 상자 이름표',box:true}
  }
 };
 const mapSkins={forest:'고대 유적 숲',snow:'설원 유적',desert:'사막 신전',lava:'용암 균열',sky:'천공 성역',mushroom:'달빛 버섯 숲',cherry:'벚꽃 정원',library:'침수된 도서관',clockwork:'태엽 공방',deepsea:'심해 유적',candy:'과자 왕국',stars:'별빛 관측소',amusement:'폐허가 된 놀이공원'};
+// 전장 스킨 해금: 숲만 처음부터 열려 있고, 네 스킨은 난이도 첫 클리어, 나머지는 조각 상자에서 얻는다.
+const mapSkinUnlock={forest:{free:true},snow:{clear:'easy'},desert:{clear:'normal'},lava:{clear:'hard'},sky:{clear:'extreme'}};
+function mapSkinUnlocked(id,firstClears=playerProfile?.firstClears||{}){if(!Object.hasOwn(mapSkins,id))return false;let rule=mapSkinUnlock[id];if(rule?.free)return true;if(rule?.clear)return firstClears[rule.clear]===true;return typeof boxCosmeticOwned==='function'&&boxCosmeticOwned('maps',id)}
+function mapSkinLockText(id){let rule=mapSkinUnlock[id];if(rule?.clear)return `${({easy:'입문',normal:'일반',hard:'상급',extreme:'극한'})[rule.clear]} 첫 클리어`;return '조각 상자에서 획득'}
 const profileDefaults={name:'수호자',title:'rookie',icon:'basic',plate:'basic',mapSkin:'forest',firstClears:{}};
 const cosmeticSlots=[['title','titles'],['icon','icons'],['plate','plates']];
 // Icons also include collected unit sprites ("unit:N001") and boss portraits ("boss:steel-x").
@@ -141,16 +152,16 @@ function collectionIcon(id){return typeof id==='string'&&/^(unit|boss):[A-Za-z0-
 function cosmeticExists(group,id){return typeof id==='string'&&(Object.hasOwn(profileCosmetics[group]||{},id)||(group==='icons'&&collectionIcon(id)))}
 function cosmeticUnlocked(group,id,firstClears=playerProfile.firstClears){
  if(group==='icons'&&collectionIcon(id))return !!globalThis.ManmulRecords?.iconUnlocked(id);
- let item=profileCosmetics[group]?.[id];if(!item)return false;
+ let item=profileCosmetics[group]?.[id];if(!item)return false;if(item.box)return typeof boxCosmeticOwned==='function'&&boxCosmeticOwned(group,id);
  let achievement=globalThis.ManmulRecords?.achievementForReward(group,id);
  if(!achievement&&!item.unlock)return true;
  return !!(achievement&&globalThis.ManmulRecords.hasAchievement(achievement.id))||!!(item.unlock&&firstClears[item.unlock]===true);
 }
-function readProfile(){try{let data=JSON.parse(localStorage.getItem(profileKey)||'{}'),firstClears={};for(const id of Object.keys(clearShardRewards))if(data.firstClears?.[id]===true)firstClears[id]=true;let profile={...profileDefaults,firstClears};if(typeof data.name==='string'&&data.name.trim())profile.name=data.name.trim().slice(0,12);if(typeof data.mapSkin==='string'&&Object.hasOwn(mapSkins,data.mapSkin))profile.mapSkin=data.mapSkin;for(const [slot,group] of cosmeticSlots)if(cosmeticExists(group,data[slot])&&cosmeticUnlocked(group,data[slot],firstClears))profile[slot]=data[slot];return profile}catch(e){return {...profileDefaults,firstClears:{}}}}
+function readProfile(){try{let data=JSON.parse(localStorage.getItem(profileKey)||'{}'),firstClears={};for(const id of Object.keys(clearShardRewards))if(data.firstClears?.[id]===true)firstClears[id]=true;let profile={...profileDefaults,firstClears};if(typeof data.name==='string'&&data.name.trim())profile.name=data.name.trim().slice(0,12);if(typeof data.mapSkin==='string'&&mapSkinUnlocked(data.mapSkin,firstClears))profile.mapSkin=data.mapSkin;for(const [slot,group] of cosmeticSlots)if(cosmeticExists(group,data[slot])&&cosmeticUnlocked(group,data[slot],firstClears))profile[slot]=data[slot];return profile}catch(e){return {...profileDefaults,firstClears:{}}}}
 let playerProfile=readProfile();
 globalThis.ManmulRecords?.migrateFirstClears(playerProfile.firstClears);
 function saveProfile(next){try{localStorage.setItem(profileKey,JSON.stringify(next));playerProfile=next;return true}catch(e){return false}}
-function updateProfile(changes){let next={...playerProfile,firstClears:{...playerProfile.firstClears}};if(typeof changes.name==='string'){let name=changes.name.trim().slice(0,12);next.name=name||profileDefaults.name}if(changes.mapSkin!==undefined){if(typeof changes.mapSkin!=='string'||!Object.hasOwn(mapSkins,changes.mapSkin))return false;next.mapSkin=changes.mapSkin}for(const [slot,group] of cosmeticSlots)if(changes[slot]!==undefined){if(!cosmeticExists(group,changes[slot])||!cosmeticUnlocked(group,changes[slot]))return false;next[slot]=changes[slot]}return saveProfile(next)}
+function updateProfile(changes){let next={...playerProfile,firstClears:{...playerProfile.firstClears}};if(typeof changes.name==='string'){let name=changes.name.trim().slice(0,12);next.name=name||profileDefaults.name}if(changes.mapSkin!==undefined){if(typeof changes.mapSkin!=='string'||!mapSkinUnlocked(changes.mapSkin))return false;next.mapSkin=changes.mapSkin}for(const [slot,group] of cosmeticSlots)if(changes[slot]!==undefined){if(!cosmeticExists(group,changes[slot])||!cosmeticUnlocked(group,changes[slot]))return false;next[slot]=changes[slot]}return saveProfile(next)}
 // Returns what was granted so the result screen can show it; saved=false means browser storage failed.
 // firstClears is still recorded for the lobby record, but it no longer unlocks cosmetics.
 function grantClearRewards(difficultyId,roundsCleared=0,won=true){let parts=runShardReward(difficultyId,roundsCleared,won),shards=parts.total,saved=shards>0?grantClearShards(shards):true;if(!won)return {saved,shards,parts};if(saved&&Object.hasOwn(clearShardRewards,difficultyId)&&!playerProfile.firstClears[difficultyId])saved=saveProfile({...playerProfile,firstClears:{...playerProfile.firstClears,[difficultyId]:true}});return {saved,shards,parts}}
