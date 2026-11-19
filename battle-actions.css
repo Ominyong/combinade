@@ -1004,3 +1004,22 @@ body:has(#multiBoard:not(.hidden)) .mission-panel .mission-near { display: none;
 .box-result b { color: var(--box); }
 .box-result em { font-style: normal; color: #ffe08a; }
 .box-cosmetic { color: #f3a6d8; }
+
+/* Unit panel (2026-11-20): one horizontal row; ▼ opens the detailed text below it. */
+.selected:has(.unit-compact) { width: min(860px,1504px); max-width: min(860px,1504px); padding: 6px 10px 8px; }
+.unit-compact { display: grid; grid-template-columns: 52px minmax(150px,1.2fr) auto auto 28px; align-items: center; gap: 12px; }
+.unit-compact .unit-portrait { width: 52px; height: 52px; }
+.unit-compact .unit-identity { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.unit-compact .unit-identity strong { font-size: 16px; }
+.unit-compact .unit-grade { font-size: 11px; }
+.unit-compact .role-tags { margin: 2px 0 0; flex-wrap: wrap; }
+.unit-stats-inline { display: flex; gap: 14px; }
+.unit-stats-inline span { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+.unit-stats-inline small { font-size: 10px; color: #8fa79f; }
+.unit-stats-inline b { font-size: 15px; color: #f2ece0; white-space: nowrap; }
+.unit-compact .skill-list { display: flex; gap: 4px; }
+.selected button.unit-more { width: 28px; height: 28px; padding: 0; font-size: 12px; }
+.unit-details { margin-top: 6px; padding-top: 6px; border-top: 1px solid #b69a6444; display: grid; gap: 3px; font-size: 12px; line-height: 1.45; color: #d7cfb9; }
+.unit-details p { margin: 0; }
+.unit-details b { color: #f0cb82; margin-right: 4px; }
+.unit-details .star-row { color: #ffe08a; letter-spacing: -1px; }

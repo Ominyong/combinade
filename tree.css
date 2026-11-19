@@ -152,3 +152,13 @@ body.tree-open .hub-menu, body.tree-open .hub-profile-panel { visibility: hidden
 .guardian-bar { height: 8px; background: #0a1011; border: 1px solid #3a4540; }
 .guardian-bar i { display: block; height: 100%; background: linear-gradient(90deg, #b69a64, #f0cb82); }
 .guardian-level small { color: #a59d86; }
+/* card-unlock skill: the reward card it adds, shown like the boss reward card */
+.tree-card-preview { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 30px 12px 10px; border: 2px solid color-mix(in srgb, var(--fam) 60%, #000); background: linear-gradient(170deg, color-mix(in srgb, var(--fam) 14%, #101a1b), #0d1415 70%); }
+.tree-card-preview .card-band { position: absolute; left: 0; right: 0; top: 0; display: flex; justify-content: space-between; padding: 3px 10px; background: color-mix(in srgb, var(--fam) 28%, #0b1414); color: var(--fam); font-size: 11px; font-weight: 700; }
+.tree-card-preview .reward-icon { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; background: var(--fam); color: #14100a; font-weight: 700; }
+.tree-card-preview strong { font-size: 16px; color: #f6e7c0; }
+.tree-card-preview-desc { font-size: 13px; color: #e7dec7; }
+.tree-card-preview small { font-size: 11px; color: #a59d86; }
+.tree-card-preview em { font-style: normal; font-size: 11px; color: #c9b88f; }
+.tree-card-preview.is-owned { border-color: var(--fam); }
+.tree-card-preview.is-owned em { color: #8bd48f; }
