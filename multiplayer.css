@@ -31,3 +31,33 @@
 .multi-card[data-level="warn"] .multi-card-bar i{background:#f2c94c}
 .multi-card[data-level="danger"] .multi-card-bar i{background:#ff6b5e}
 .multi-card-meta{color:#b7c9c1}
+
+/* 관전 버튼, 채팅, 관전 표시줄(임시 스타일) */
+.multi-watch{margin-top:4px;font:inherit;font-size:11px;color:#eef6ed;background:#17262b;border:1px solid #739b8c;border-radius:6px;padding:2px 8px;cursor:pointer}
+.multi-watch.is-on,.multi-card.is-watched .multi-watch{border-color:#f1d58e;color:#f1d58e}
+.multi-card.is-watched{box-shadow:inset 3px 0 0 #f1d58e;padding-left:6px}
+.multi-chat{top:540px;left:16px;width:260px;height:220px;display:flex;flex-direction:column;padding:8px 10px;font-size:12px;line-height:1.4;pointer-events:auto}
+.multi-chat-log{flex:1;overflow-y:auto;margin-bottom:6px}
+.multi-chat-log p{margin:0 0 3px;overflow-wrap:anywhere;color:#dfe8e3}
+.multi-chat-log strong{color:#9fd3c0}
+.multi-chat-log .chat-self strong{color:#f1d58e}
+.multi-chat-log .chat-system{color:#a59d86;font-style:italic}
+.multi-chat-form input{width:100%;box-sizing:border-box;font:inherit;color:#eef6ed;background:#17262b;border:1px solid #739b8c;border-radius:6px;padding:5px 8px}
+.multi-chat-form input:focus{outline:none;border-color:#f1d58e}
+.spectate-bar{top:104px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;padding:8px 14px;font-size:13px;border-color:#f1d58e;pointer-events:auto}
+.spectate-bar strong{color:#f1d58e}
+.spectate-bar button{font:inherit;font-size:12px;color:#eef6ed;background:#5b4a24;border:1px solid #d8b863;border-radius:6px;padding:4px 10px;cursor:pointer}
+.spectate-panel{bottom:94px;left:50%;transform:translateX(-50%);width:340px;padding:10px 12px;font-size:13px;line-height:1.5;pointer-events:auto}
+.spectate-panel .skill-list{display:flex;gap:6px;margin:6px 0}
+.spectate-note{color:#a59d86}
+.multi-final{margin:8px 0 12px;padding:0;list-style:none}
+.multi-final li{display:flex;gap:10px;align-items:baseline;padding:6px 8px;border-bottom:1px solid #9fc4bd33}
+.multi-final li.is-self{color:#f1d58e}
+.multi-final li span{margin-left:auto;color:#b7c9c1}
+.multi-final-actions{display:flex;gap:8px;justify-content:center;margin-top:10px}
+
+/* 위의 display 지정이 공용 .hidden을 덮어쓰지 않게 한다. */
+.multi-chat.hidden,.spectate-bar.hidden,.spectate-panel.hidden,.multi-board.hidden{display:none}
+
+.multi-ready{margin-left:4px;padding:0 6px;border-radius:4px;font-size:11px;color:#a59d86;background:#121c1f}
+.multi-ready.is-on{color:#9fe0a6;background:#1d3324}

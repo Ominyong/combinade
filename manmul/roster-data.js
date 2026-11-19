@@ -894,6 +894,22 @@ globalThis.ManmulRosterData={
           "unit_id": "M006",
           "quantity": 1
         }
+      ],
+      "alt_recipes": [
+        [
+          {
+            "unit_id": "M020",
+            "quantity": 1
+          },
+          {
+            "unit_id": "M012",
+            "quantity": 1
+          },
+          {
+            "unit_id": "N004",
+            "quantity": 1
+          }
+        ]
       ]
     },
     {
@@ -1472,6 +1488,18 @@ globalThis.ManmulRosterData={
           "unit_id": "M002",
           "quantity": 1
         }
+      ],
+      "alt_recipes": [
+        [
+          {
+            "unit_id": "M024",
+            "quantity": 1
+          },
+          {
+            "unit_id": "M005",
+            "quantity": 1
+          }
+        ]
       ]
     },
     {
@@ -1524,6 +1552,18 @@ globalThis.ManmulRosterData={
           "unit_id": "R001",
           "quantity": 1
         }
+      ],
+      "alt_recipes": [
+        [
+          {
+            "unit_id": "M020",
+            "quantity": 1
+          },
+          {
+            "unit_id": "R041",
+            "quantity": 1
+          }
+        ]
       ]
     },
     {
@@ -1890,6 +1930,22 @@ globalThis.ManmulRosterData={
           "unit_id": "N002",
           "quantity": 1
         }
+      ],
+      "alt_recipes": [
+        [
+          {
+            "unit_id": "M026",
+            "quantity": 1
+          },
+          {
+            "unit_id": "R038",
+            "quantity": 1
+          },
+          {
+            "unit_id": "N002",
+            "quantity": 1
+          }
+        ]
       ]
     },
     {
@@ -1998,6 +2054,22 @@ globalThis.ManmulRosterData={
           "unit_id": "R026",
           "quantity": 1
         }
+      ],
+      "alt_recipes": [
+        [
+          {
+            "unit_id": "R021",
+            "quantity": 1
+          },
+          {
+            "unit_id": "R026",
+            "quantity": 1
+          },
+          {
+            "unit_id": "N002",
+            "quantity": 1
+          }
+        ]
       ]
     },
     {
@@ -2448,6 +2520,18 @@ globalThis.ManmulRosterData={
           "unit_id": "M024",
           "quantity": 1
         }
+      ],
+      "alt_recipes": [
+        [
+          {
+            "unit_id": "R051",
+            "quantity": 1
+          },
+          {
+            "unit_id": "M008",
+            "quantity": 1
+          }
+        ]
       ]
     },
     {
@@ -2642,6 +2726,22 @@ globalThis.ManmulRosterData={
           "unit_id": "R029",
           "quantity": 1
         }
+      ],
+      "alt_recipes": [
+        [
+          {
+            "unit_id": "R014",
+            "quantity": 1
+          },
+          {
+            "unit_id": "R034",
+            "quantity": 1
+          },
+          {
+            "unit_id": "R001",
+            "quantity": 1
+          }
+        ]
       ]
     },
     {
@@ -2672,6 +2772,18 @@ globalThis.ManmulRosterData={
           "unit_id": "M005",
           "quantity": 1
         }
+      ],
+      "alt_recipes": [
+        [
+          {
+            "unit_id": "R022",
+            "quantity": 1
+          },
+          {
+            "unit_id": "R001",
+            "quantity": 1
+          }
+        ]
       ]
     },
     {
@@ -2702,6 +2814,26 @@ globalThis.ManmulRosterData={
           "unit_id": "M006",
           "quantity": 1
         }
+      ],
+      "alt_recipes": [
+        [
+          {
+            "unit_id": "R015",
+            "quantity": 1
+          },
+          {
+            "unit_id": "R004",
+            "quantity": 1
+          },
+          {
+            "unit_id": "M006",
+            "quantity": 1
+          },
+          {
+            "unit_id": "N002",
+            "quantity": 1
+          }
+        ]
       ]
     },
     {
@@ -2762,6 +2894,22 @@ globalThis.ManmulRosterData={
           "unit_id": "R013",
           "quantity": 1
         }
+      ],
+      "alt_recipes": [
+        [
+          {
+            "unit_id": "R047",
+            "quantity": 1
+          },
+          {
+            "unit_id": "R013",
+            "quantity": 1
+          },
+          {
+            "unit_id": "R003",
+            "quantity": 1
+          }
+        ]
       ]
     },
     {
@@ -2792,6 +2940,18 @@ globalThis.ManmulRosterData={
           "unit_id": "M005",
           "quantity": 1
         }
+      ],
+      "alt_recipes": [
+        [
+          {
+            "unit_id": "R046",
+            "quantity": 1
+          },
+          {
+            "unit_id": "N001",
+            "quantity": 1
+          }
+        ]
       ]
     },
     {
@@ -2822,6 +2982,18 @@ globalThis.ManmulRosterData={
           "unit_id": "N004",
           "quantity": 1
         }
+      ],
+      "alt_recipes": [
+        [
+          {
+            "unit_id": "R018",
+            "quantity": 1
+          },
+          {
+            "unit_id": "R015",
+            "quantity": 1
+          }
+        ]
       ]
     },
     {
@@ -2976,6 +3148,18 @@ globalThis.ManmulRosterData={
           "unit_id": "R009",
           "quantity": 1
         }
+      ],
+      "alt_recipes": [
+        [
+          {
+            "unit_id": "R033",
+            "quantity": 1
+          },
+          {
+            "unit_id": "M016",
+            "quantity": 1
+          }
+        ]
       ]
     },
     {
@@ -3006,6 +3190,18 @@ globalThis.ManmulRosterData={
           "unit_id": "R011",
           "quantity": 1
         }
+      ],
+      "alt_recipes": [
+        [
+          {
+            "unit_id": "R020",
+            "quantity": 1
+          },
+          {
+            "unit_id": "R006",
+            "quantity": 1
+          }
+        ]
       ]
     },
     {
@@ -3246,6 +3442,26 @@ globalThis.ManmulRosterData={
           "unit_id": "M002",
           "quantity": 1
         }
+      ],
+      "alt_recipes": [
+        [
+          {
+            "unit_id": "R032",
+            "quantity": 1
+          },
+          {
+            "unit_id": "R004",
+            "quantity": 1
+          },
+          {
+            "unit_id": "M002",
+            "quantity": 1
+          },
+          {
+            "unit_id": "N002",
+            "quantity": 1
+          }
+        ]
       ]
     },
     {
@@ -3478,6 +3694,22 @@ globalThis.ManmulRosterData={
           "unit_id": "R026",
           "quantity": 1
         }
+      ],
+      "alt_recipes": [
+        [
+          {
+            "unit_id": "R044",
+            "quantity": 1
+          },
+          {
+            "unit_id": "R031",
+            "quantity": 1
+          },
+          {
+            "unit_id": "R055",
+            "quantity": 1
+          }
+        ]
       ]
     },
     {
@@ -3860,6 +4092,22 @@ globalThis.ManmulRosterData={
           "unit_id": "M003",
           "quantity": 1
         }
+      ],
+      "alt_recipes": [
+        [
+          {
+            "unit_id": "R035",
+            "quantity": 1
+          },
+          {
+            "unit_id": "R012",
+            "quantity": 1
+          },
+          {
+            "unit_id": "M012",
+            "quantity": 1
+          }
+        ]
       ]
     },
     {
@@ -3890,6 +4138,26 @@ globalThis.ManmulRosterData={
           "unit_id": "M005",
           "quantity": 1
         }
+      ],
+      "alt_recipes": [
+        [
+          {
+            "unit_id": "R057",
+            "quantity": 1
+          },
+          {
+            "unit_id": "M014",
+            "quantity": 1
+          },
+          {
+            "unit_id": "N002",
+            "quantity": 1
+          },
+          {
+            "unit_id": "M007",
+            "quantity": 1
+          }
+        ]
       ]
     },
     {
@@ -4084,6 +4352,18 @@ globalThis.ManmulRosterData={
           "unit_id": "R029",
           "quantity": 1
         }
+      ],
+      "alt_recipes": [
+        [
+          {
+            "unit_id": "R036",
+            "quantity": 1
+          },
+          {
+            "unit_id": "R001",
+            "quantity": 1
+          }
+        ]
       ]
     },
     {
@@ -4166,6 +4446,18 @@ globalThis.ManmulRosterData={
           "unit_id": "M022",
           "quantity": 1
         }
+      ],
+      "alt_recipes": [
+        [
+          {
+            "unit_id": "R027",
+            "quantity": 1
+          },
+          {
+            "unit_id": "R013",
+            "quantity": 1
+          }
+        ]
       ]
     },
     {
@@ -4252,6 +4544,18 @@ globalThis.ManmulRosterData={
           "unit_id": "R029",
           "quantity": 1
         }
+      ],
+      "alt_recipes": [
+        [
+          {
+            "unit_id": "R056",
+            "quantity": 1
+          },
+          {
+            "unit_id": "R001",
+            "quantity": 1
+          }
+        ]
       ]
     },
     {
@@ -4342,6 +4646,22 @@ globalThis.ManmulRosterData={
           "unit_id": "N005",
           "quantity": 1
         }
+      ],
+      "alt_recipes": [
+        [
+          {
+            "unit_id": "R023",
+            "quantity": 1
+          },
+          {
+            "unit_id": "R034",
+            "quantity": 1
+          },
+          {
+            "unit_id": "R035",
+            "quantity": 1
+          }
+        ]
       ]
     },
     {

@@ -56,7 +56,8 @@ const profileCosmetics={
   flawless:{name:'무결 이름표'}
  }
 };
-const profileDefaults={name:'수호자',title:'rookie',icon:'basic',plate:'basic',firstClears:{}};
+const mapSkins={forest:'고대 유적 숲',snow:'설원 유적',desert:'사막 신전',lava:'용암 균열',sky:'천공 성역',mushroom:'달빛 버섯 숲',cherry:'벚꽃 정원',library:'침수된 도서관',clockwork:'태엽 공방',deepsea:'심해 유적',candy:'과자 왕국',stars:'별빛 관측소',amusement:'폐허가 된 놀이공원'};
+const profileDefaults={name:'수호자',title:'rookie',icon:'basic',plate:'basic',mapSkin:'forest',firstClears:{}};
 const cosmeticSlots=[['title','titles'],['icon','icons'],['plate','plates']];
 // Icons also include collected unit sprites ("unit:N001") and boss portraits ("boss:steel-x").
 function collectionIcon(id){return typeof id==='string'&&/^(unit|boss):[A-Za-z0-9-]+$/.test(id)}
@@ -68,11 +69,11 @@ function cosmeticUnlocked(group,id,firstClears=playerProfile.firstClears){
  if(!achievement&&!item.unlock)return true;
  return !!(achievement&&globalThis.ManmulRecords.hasAchievement(achievement.id))||!!(item.unlock&&firstClears[item.unlock]===true);
 }
-function readProfile(){try{let data=JSON.parse(localStorage.getItem(profileKey)||'{}'),firstClears={};for(const id of Object.keys(clearShardRewards))if(data.firstClears?.[id]===true)firstClears[id]=true;let profile={...profileDefaults,firstClears};if(typeof data.name==='string'&&data.name.trim())profile.name=data.name.trim().slice(0,12);for(const [slot,group] of cosmeticSlots)if(cosmeticExists(group,data[slot])&&cosmeticUnlocked(group,data[slot],firstClears))profile[slot]=data[slot];return profile}catch(e){return {...profileDefaults,firstClears:{}}}}
+function readProfile(){try{let data=JSON.parse(localStorage.getItem(profileKey)||'{}'),firstClears={};for(const id of Object.keys(clearShardRewards))if(data.firstClears?.[id]===true)firstClears[id]=true;let profile={...profileDefaults,firstClears};if(typeof data.name==='string'&&data.name.trim())profile.name=data.name.trim().slice(0,12);if(typeof data.mapSkin==='string'&&Object.hasOwn(mapSkins,data.mapSkin))profile.mapSkin=data.mapSkin;for(const [slot,group] of cosmeticSlots)if(cosmeticExists(group,data[slot])&&cosmeticUnlocked(group,data[slot],firstClears))profile[slot]=data[slot];return profile}catch(e){return {...profileDefaults,firstClears:{}}}}
 let playerProfile=readProfile();
 globalThis.ManmulRecords?.migrateFirstClears(playerProfile.firstClears);
 function saveProfile(next){try{localStorage.setItem(profileKey,JSON.stringify(next));playerProfile=next;return true}catch(e){return false}}
-function updateProfile(changes){let next={...playerProfile,firstClears:{...playerProfile.firstClears}};if(typeof changes.name==='string'){let name=changes.name.trim().slice(0,12);next.name=name||profileDefaults.name}for(const [slot,group] of cosmeticSlots)if(changes[slot]!==undefined){if(!cosmeticExists(group,changes[slot])||!cosmeticUnlocked(group,changes[slot]))return false;next[slot]=changes[slot]}return saveProfile(next)}
+function updateProfile(changes){let next={...playerProfile,firstClears:{...playerProfile.firstClears}};if(typeof changes.name==='string'){let name=changes.name.trim().slice(0,12);next.name=name||profileDefaults.name}if(changes.mapSkin!==undefined){if(typeof changes.mapSkin!=='string'||!Object.hasOwn(mapSkins,changes.mapSkin))return false;next.mapSkin=changes.mapSkin}for(const [slot,group] of cosmeticSlots)if(changes[slot]!==undefined){if(!cosmeticExists(group,changes[slot])||!cosmeticUnlocked(group,changes[slot]))return false;next[slot]=changes[slot]}return saveProfile(next)}
 // Returns what was granted so the result screen can show it; saved=false means browser storage failed.
 // firstClears is still recorded for the lobby record, but it no longer unlocks cosmetics.
 function grantClearRewards(difficultyId){let shards=clearShardRewards[difficultyId]??3,saved=grantClearShards(shards);if(saved&&Object.hasOwn(clearShardRewards,difficultyId)&&!playerProfile.firstClears[difficultyId])saved=saveProfile({...playerProfile,firstClears:{...playerProfile.firstClears,[difficultyId]:true}});return {saved,shards}}

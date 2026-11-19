@@ -158,7 +158,7 @@
  const api={storageKey,unitIconThresholds,bossIconThreshold,achievements,
   get data(){return rec},get run(){return run},
   nameOf:null,gradeOf:null,
-  beginRun,abandonRun,acquire,trackEnemies,useSupport,waveStarted,kill,finishRun,save,reload,
+  beginRun,abandonRun,restoreRun:r=>{if(r&&typeof r==='object')run=r},acquire,trackEnemies,useSupport,waveStarted,kill,finishRun,save,reload,
   migrateFirstClears,hasAchievement,iconUnlocked,achievementForReward,achievementList,unitIconProgress,bossIconProgress,onUnlock};
  return api;
 });

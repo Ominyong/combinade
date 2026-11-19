@@ -14,7 +14,7 @@ for(const [key,spec] of Object.entries(arrivalFxSpecs)){
  if(typeof Image==='undefined')continue;
  const image=new Image();image.src=`assets/effects/summon-fusion/${spec.file||key}-sheet.png`;arrivalFxImages.set(key,image);
 }
-function showArrivalEffect(key,unit){
+function showArrivalEffect(key,unit){globalThis.ManmulSound?.play(key==='summon'?'summon':'fuse',{grade:key});
  if(!arrivalFxSpecs[key])return;
  arrivalEffects.push({key,x:unit.x,y:unit.y,age:0});
 }

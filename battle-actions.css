@@ -639,3 +639,15 @@ body:has(#roundBanner.is-visible) .toast { top: 180px; }
 .selected .skill-icon { position: relative; }
 .skill-level { position: absolute; top: -6px; right: -6px; z-index: 1; min-width: 16px; padding: 0 3px; border: 1px solid #2a1d08; border-radius: 3px; background: #f0c75a; color: #2a1d08; font-size: 10px; font-weight: 700; line-height: 14px; text-align: center; pointer-events: none; }
 .stat-bonus { margin-left: 3px; color: #7fe08a; }
+
+/* Beginner hints (placeholder look). Bottom-right, clear of the goal tracker and the action bar; never blocks the battle. */
+.tutorial-hint { bottom: 24px; right: 16px; width: 300px; padding: 10px 12px; font-size: 13px; line-height: 1.5; border-color: #8fc1e8; pointer-events: auto; z-index: 30; }
+.tutorial-head { display: flex; flex-direction: column; gap: 1px; margin-bottom: 4px; }
+.tutorial-eyebrow { color: #8fc1e8; font-size: 11px; letter-spacing: .08em; }
+.tutorial-head strong { color: #f6efd9; font-size: 14px; }
+.tutorial-hint p { margin: 0 0 8px; color: #dfe8e3; }
+.tutorial-hint b { color: #ffe0a0; font-weight: 600; }
+.tutorial-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.tutorial-actions button { font: inherit; font-size: 12px; padding: 4px 10px; border-radius: 6px; cursor: pointer; color: #eef6ed; background: #17262b; border: 1px solid #739b8c; }
+.tutorial-actions .tutorial-ok { background: #2b4f63; border-color: #8fc1e8; }
+.setting-reset { margin-top: 6px; }

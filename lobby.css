@@ -22,6 +22,11 @@
 .hub-dialog.hidden{display:none}
 .hub-dialog-panel{position:relative;width:min(720px,1472px);max-height:774px;overflow:auto;padding:26px 28px;border:1px solid #9fc4bd55;border-radius:14px;background:#122229;box-shadow:0 18px 50px #000a}
 .hub-dialog-panel h2{margin:0 0 16px;font-size:19px}
+.hub-dialog-panel{scrollbar-width:thin;scrollbar-color:#a28a5e #152529}
+.hub-dialog-panel::-webkit-scrollbar{width:10px}
+.hub-dialog-panel::-webkit-scrollbar-track{background:#152529}
+.hub-dialog-panel::-webkit-scrollbar-thumb{background:#806c4b;border:2px solid #152529;border-radius:0}
+.hub-dialog-panel::-webkit-scrollbar-thumb:hover{background:#b69a64}
 .hub-dialog-close{position:absolute;top:14px;right:14px;width:32px;height:32px;padding:0;border:1px solid #7aa69a66;border-radius:8px;background:#203a3c;color:#e9f0eb;font-size:20px;cursor:pointer}
 .profile-preview{cursor:default;margin-bottom:16px;width:max-content}
 .profile-name{display:flex;align-items:center;gap:8px;margin-bottom:6px}
@@ -35,6 +40,17 @@
 .profile-option strong{font-size:12px}
 .profile-option small{font-size:10px;color:#93aa9c;margin-top:2px}
 .profile-option[aria-pressed="true"]{border-color:#b8e2c7;background:#25463d}
+.map-skin-options{display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:8px;margin-top:10px}
+.map-skin-option{padding:4px;border:2px solid #627b70;background:#182a2b;color:#e9f0eb;text-align:left;cursor:pointer;font:inherit}
+.map-skin-option[aria-pressed="true"]{border-color:#f0cb82;background:#365247}
+.map-skin-option img{display:block;width:100%;aspect-ratio:10/7;object-fit:cover}
+.map-skin-option .map-skin-forest{position:relative;display:block;padding:0;width:100%;aspect-ratio:10/7;background:url('assets/ui/ancient-ruins-v1/outer-ground.webp') center/100% 100% no-repeat;overflow:hidden}
+.map-skin-forest i,.map-skin-forest b{position:absolute;display:block}
+.map-skin-forest i{left:19%;top:20%;width:62%;height:60%;background:url('assets/ui/ancient-ruins-v1/arena-floor.webp') center/100% 100% no-repeat}
+.map-skin-forest b{left:10.5%;top:7.57%;width:79%;height:84.86%;background:url('assets/ui/ancient-ruins-v1/enemy-path.webp') center/100% 100% no-repeat}
+.map-skin-option span{display:block;padding:5px 3px;font-size:12px}
+.multi-card-skin{display:flex;align-items:center;gap:5px;color:#b9cfbd;font-size:10px;margin:3px 0}
+.multi-card-skin img{width:36px;height:25px;object-fit:cover;border:1px solid #a99877}
 .profile-option:disabled{opacity:.45;cursor:default}
 .profile-option .profile-icon{width:28px;height:28px;font-size:14px}
 .plate-swatch{flex:none;width:34px;height:20px;border-radius:5px;border:1px solid #b4cbb43d;background:#17282b}
@@ -86,3 +102,19 @@
 .achievement-row strong,.achievement-row small{display:block}.achievement-row small{font-size:11px;color:#a59d86;margin-top:2px}
 .achievement-reward{text-align:right;font-size:11px;color:#d9bd7c}
 .plate-banner{background:#3b2a24}.plate-blood{background:#4a1f22}.plate-codex{background:#2b2f4a}.plate-rift{background:#33204a}.plate-flawless{background:#e8e2cf}
+
+/* 이어하기 카드(임시 스타일) */
+.resume-box{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:12px 14px;border:1px solid #d8b86399;border-radius:12px;background:#1d1a10cc;color:#e3dcc7}
+.resume-box.hidden{display:none}
+.resume-info{display:flex;flex-direction:column;gap:2px;min-width:0}
+.resume-info strong{color:#f1d58e;font-size:15px}
+.resume-info span{color:#bfb59c;font-size:13px}
+.resume-actions{display:flex;align-items:center;gap:6px;flex:none}
+.resume-actions button{font:inherit;color:#eef6ed;background:#17262b;border:1px solid #b69a6499;border-radius:8px;padding:7px 12px;cursor:pointer}
+.resume-actions .resume-go{background:#5b4a24;border-color:#d8b863}
+.resume-actions .resume-drop{color:#f0b3a5}
+.resume-ask{color:#f0c36d;font-size:13px}
+.resume-box{flex-direction:column;align-items:stretch}
+.resume-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.resume-row+.resume-row{padding-top:10px;border-top:1px solid #d8b86333}
+.resume-multi .resume-info strong{color:#9fd3c0}
