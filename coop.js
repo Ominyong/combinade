@@ -14,7 +14,7 @@ const Coop=(()=>{
  const colors=['#f0cb82','#6fe0d0','#f39ac8','#b79bff'];
  const scale={hp:[1,1,1.8,2.5,3.2],boss:[1,1,2.2,3.3,4.4],count:[1,1,1.3,1.6,1.9],limit:[100,100,130,150,170]};
  const SNAP=.1,CACHE=.25,RAID_EVERY=20;
- let on=false,host=false,me=null,roster=[],extraThemes=[],ctx={},acting=null,saved=null,cache={},team={},cacheAt=-1,snapAt=0,notes=null,pings=[],contrib={},hits=[],guestTargets=new Map(),lastPending='',raidPhase={};
+ let on=false,host=false,me=null,roster=[],extraThemes=[],ctx={},acting=null,saved=null,cache={},team={},cacheAt=-1,snapAt=0,notes=null,pings=[],contrib={},hits=[],guestTargets=new Map(),sentCards=[],lastPending='',raidPhase={};
  const count=()=>Math.max(1,Math.min(4,roster.length));
  function colorOf(id){let i=roster.findIndex(p=>p.id===id);return colors[(i<0?0:i)%colors.length]}
  function nameOf(id){return roster.find(p=>p.id===id)?.name||'플레이어'}
@@ -107,7 +107,7 @@ const Coop=(()=>{
   globalThis.convertUnit=id=>{send({c:'convert',id})};
   globalThis.upgradeGrade=grade=>{send({c:'upgrade',grade})};
   globalThis.useTicket=(kind,id)=>{send({c:'ticket',kind,id});if((selectionTickets[kind]||0)<=1)closeModal();return true};
-  globalThis.collectReward=id=>{if(!pendingRewards.length||!pendingRewards[0].includes(id))return;send({c:'card',id});pendingRewards=pendingRewards.slice(1);lastPending=JSON.stringify(pendingRewards);paused=false;$('#modal').classList.add('hidden');if(!pendingRewards.length)$('#rewardButton').classList.add('hidden');else showReward();updateUI()};
+  globalThis.collectReward=id=>{if(!pendingRewards.length||!pendingRewards[0].includes(id))return;sentCards.push({s:JSON.stringify(pendingRewards[0]),at:Date.now()});send({c:'card',id});pendingRewards=pendingRewards.slice(1);lastPending=JSON.stringify(pendingRewards);paused=false;$('#modal').classList.add('hidden');if(!pendingRewards.length)$('#rewardButton').classList.add('hidden');else showReward();updateUI()};
   globalThis.useSupport=id=>{send({c:'support',id});closeModal()};
   globalThis.issueMove=(group,point)=>{let ids=group.filter(u=>u.owner===me).map(u=>u.id);if(ids.length)send({c:'move',ids,x:point.x,y:point.y});for(const u of group){u.tx=point.x;u.ty=point.y}};
   globalThis.startWave=()=>{};globalThis.multiSyncClock=()=>{};
@@ -120,7 +120,8 @@ const Coop=(()=>{
   for(const [eid,amt,mag] of s.h||[]){let e=enemies.find(x=>x.id===eid);if(e)showDamageFeedback(e,amt,mag?'마법':'물리')}
   contrib=s.c||{};
   if(p){gold=p.g;for(const k of Object.keys(gradeLevels))gradeLevels[k]=p.gl?.[k]||0;selectionTickets=p.tk||{normal:0,magic:0};runCards=p.rc||[];runLevels=p.rl||runLevels;for(const k of Object.keys(runRelics))delete runRelics[k];for(const k of p.rr||[])runRelics[k]=true;Object.assign(supportUses,p.su||{});
-   let pend=JSON.stringify(p.pr||[]);if(pend!==lastPending){lastPending=pend;pendingRewards=p.pr||[];if(pendingRewards.length){$('#rewardButton')?.classList.remove('hidden');if($('#modal')?.classList.contains('hidden'))showReward()}}}
+   let pr=(p.pr||[]).slice(),now=Date.now();sentCards=sentCards.filter(x=>{if(now-x.at>4000)return false;let i=pr.findIndex(c=>JSON.stringify(c)===x.s);if(i<0)return false;pr.splice(i,1);return true});
+   let pend=JSON.stringify(pr);if(pend!==lastPending){lastPending=pend;pendingRewards=pr;let rewardOpen=!$('#modal')?.classList.contains('hidden')&&String($('#modalContent')?.innerHTML||'').includes('BOSS REWARD');if(pendingRewards.length){$('#rewardButton')?.classList.remove('hidden');if(rewardOpen||$('#modal')?.classList.contains('hidden'))showReward()}else{$('#rewardButton')?.classList.add('hidden');if(rewardOpen){$('#modal').classList.add('hidden');paused=false}}}}
   if(wave!==wasWave&&typeof showRoundBanner==='function')showRoundBanner(wave);
   if(s.en&&!ended){if(s.won)win();else end();multiFinished(!!s.won)}
   updateUI()}
