@@ -37,6 +37,8 @@
   // (Taking a full JSON snapshot of every enemy on every skill cast was the largest late-game cost.)
   function markSignature(e){let m=e.manmulMarks;if(!m)return '';let out='';for(const k in m){let v=m[k];out+=k+'='+(v&&typeof v==='object'?JSON.stringify(v):v)+';'}return out}
   function castSkill(unit,now){
+   // Most calls happen while the skill is still cooling down: answer those before building the full profile.
+   if(!skills.definitions[unit.type]||!Number.isFinite(now)||now<(unit.skillReadyAt||0))return false;
    let existing=(unit.manmulBuffs||[]).filter(x=>x.stat==='nextSkillDamage'&&x.until>now),actor=profile(unit),result;
    // Capture only actual effects, never an independently predicted target list.
    let capture=typeof hooks.onSkillEffect==='function',effects=[],originals={},beforeMarks=capture?new Map(enemies().map(e=>[e,markSignature(e)])):null;
@@ -47,7 +49,7 @@
    if(result&&capture){for(const e of enemies())if(beforeMarks.has(e)&&markSignature(e)!==beforeMarks.get(e)){let p=point(e.d);effects.push({kind:'enemy',id:e.id,x:p.x,y:p.y})}hooks.onSkillEffect(unit,skills.definitions[unit.type],effects,now)}
    return result;
   }
-  function tickPassive(unit,now,target){let actor=profile(unit),result=passives.tick(actor,now,world),def=basicDefinitions[unit.type];if(target&&def&&basic.periodic(actor,target,def,world,now)){unit.periodicBonusAt=actor.periodicBonusAt;result=true}return result}
+  function tickPassive(unit,now,target){let def0=basicDefinitions[unit.type],passiveDue=!!passives.interval[unit.type]&&(unit.passiveReadyAt===undefined||now>=unit.passiveReadyAt),periodicDue=!!(target&&def0)&&['periodic_bonus','periodic_area','periodicShots'].includes(def0.kind)&&now>=(unit.periodicBonusAt||0);if(!passiveDue&&!periodicDue)return false;let actor=profile(unit),result=passives.tick(actor,now,world),def=basicDefinitions[unit.type];if(target&&def&&basic.periodic(actor,target,def,world,now)){unit.periodicBonusAt=actor.periodicBonusAt;result=true}return result}
   function prepareUnit(unit,now){let t=hooks.type(unit.type);unit.skillReadyAt=now+(t.skill_cooldown_seconds||0)*(1-Math.min(.35,auraBonus(unit,'cooldown')));unit.periodicBonusAt=now+(basicDefinitions[unit.type]?.interval||0);if(passives.interval[unit.type])unit.passiveReadyAt=now+passives.interval[unit.type]}
   function attackInterval(unit){let t=hooks.type(unit.type);if(!t.attack_interval_seconds)return null;let auras=new Map();for(const other of units()){if(other.id===unit.id)continue;let def=basicDefinitions[other.type],aura=def&&basic.speedAura(def);if(aura&&Math.hypot(other.x-unit.x,other.y-unit.y)<=aura.radius)auras.set(other.type,aura.amount)}let speed=Math.min(.6,[...auras.values()].reduce((a,b)=>a+b,0)+auraBonus(unit,'speed')+(hooks.speedBonus?hooks.speedBonus(unit):0));return (unit.type==='L002'?8:t.attack_interval_seconds)/(1+speed)}
   return {profile,range,world,basicAttack,castSkill,tickPassive,prepareUnit,attackInterval};

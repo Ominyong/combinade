@@ -30,7 +30,17 @@ const HudLayout=(()=>{
  // Beginner hints dismiss themselves (counted as seen) when left alone.
  let hintSince=0,hintId=null;
  function hintTick(){let hint=$('#tutorialHint');if(!shown(hint)||typeof ManmulTutorial!=='object'){hintId=null;return}let id=ManmulTutorial.current;if(id!==hintId){hintId=id;hintSince=Date.now();return}if(id&&Date.now()-hintSince>HINT_SECONDS*1000){ManmulTutorial.dismiss();hintId=null}}
- function tick(){try{addFoldButtons();layout();hintTick()}catch(e){}}
+ // Unit panel over the field: hovering its empty parts with units selected makes it see-through, and a right-click
+ // there moves the selected units to that spot on the field (the panel no longer blocks the bottom of the arena).
+ let peekInstalled=false;
+ function installPeek(){let box=$('#selection');if(!box||peekInstalled||!box.addEventListener)return;peekInstalled=true;
+  const interactive=t=>!!t?.closest?.('button,input,select,a,.skill-wrap,.unit-more');
+  const ownSelected=()=>typeof selected!=='undefined'&&typeof units!=='undefined'&&selected.length>0&&units.some(u=>selected.includes(u.id));
+  box.addEventListener('pointermove',e=>box.classList.toggle('is-peek',ownSelected()&&!interactive(e.target)));
+  box.addEventListener('pointerleave',()=>box.classList.remove('is-peek'));
+  box.addEventListener('contextmenu',e=>{if(ownSelected())e.preventDefault()});
+  box.addEventListener('pointerdown',e=>{if(e.button!==2||!ownSelected()||typeof pos!=='function'||typeof issueMove!=='function')return;e.preventDefault();e.stopPropagation();issueMove(units.filter(u=>selected.includes(u.id)),pos(e))})}
+ function tick(){try{addFoldButtons();layout();hintTick();installPeek()}catch(e){}}
  if(typeof setInterval==='function'&&typeof document!=='undefined')setInterval(tick,400);
  return {layout,tick,get folded(){return folded}};
 })();

@@ -1071,3 +1071,20 @@ body.coop-mode #huntButton { display: none; }
 .multi-chat .hud-fold { right: 6px; top: 6px; }
 .goal-tracker { overflow-y: auto; }
 .coop-bar.hidden { display: none; }
+
+/* Unit panel no longer hides the bottom of the field: the button row moves into the panel's single row, and with
+   units selected the empty parts of the panel turn see-through on hover; right-click there moves the units. */
+.selected:has(.unit-compact) { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "main tools" "details details"; column-gap: 10px; align-items: center; }
+.selected:has(.unit-compact) .unit-compact { grid-area: main; }
+.selected:has(.unit-compact) .unit-details { grid-area: details; }
+.selected:has(.unit-compact) .selection-toolbar { grid-area: tools; position: static; display: grid; grid-template-columns: auto auto; gap: 4px; }
+.selected:has(.unit-compact) .selection-toolbar-group { gap: 4px; }
+.selected:has(.unit-compact) .selection-toolbar button:not(.portrait):not(.skill-icon) { padding: 3px 8px; font-size: 11px; min-height: 0; }
+.selected:has(.unit-compact) .selection-toolbar .selection-toolbar-close:not(.portrait):not(.skill-icon) { width: 26px; min-width: 26px; font-size: 16px; }
+.selected.is-peek { opacity: .28; transition: opacity .12s; }
+.selected { transition: opacity .12s; }
+/* Field limits for 재앙 (1) and 천체 (2): shown on the unit panel, in the codex and on fusion cards. */
+.grade-limit { color: #ff9b7a; font-weight: 400; }
+.codex-stats .grade-limit { padding: 0 6px; border: 1px solid #ff9b7a88; }
+.fusion-card[data-limit] { position: relative; }
+.fusion-card[data-limit]::after { content: attr(data-limit); position: absolute; left: 4px; top: 4px; padding: 0 4px; background: #2a1612e6; border: 1px solid #ff9b7a; color: #ffc4ad; font-size: 10px; pointer-events: none; }

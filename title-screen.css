@@ -135,3 +135,19 @@ body:has(#lobby:not(.hidden))::before { content: ''; position: fixed; inset: 0; 
 .rift-steps b { display: inline-block; width: 16px; margin-right: 4px; color: #e78fc8; }
 .rift-reward { margin: 4px 0 0; font-size: 12px; color: #f0cb82; }
 .rift-next, .rift-locked { margin: 6px 0 0; font-size: 12px; color: #b9a3b2; }
+
+/* ---------- 무한 균열: 난이도 줄 아래 한 줄 카드 + 타이틀 랭킹 ---------- */
+.difficulty-card.is-endless { --diff: #b78cff; grid-column: 1 / -1; flex-direction: row; justify-content: center; gap: 12px; padding: 9px 10px; }
+.difficulty-card.is-endless strong { font-size: 17px; }
+.hub-ranking { padding: 8px 4px 6px; border-bottom: 2px solid #b69a6433; }
+.hub-ranking-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
+.hub-ranking-head span { font-size: 12px; color: #c9a8ff; font-weight: 700; }
+.hub-ranking-head small { font-size: 10px; color: #958e79; }
+.hub-ranking-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+.hub-ranking-list li { display: grid; grid-template-columns: 18px 48px 1fr auto; align-items: center; gap: 6px; padding: 3px 6px; background: #12201f; border: 1px solid #b69a6433; font-size: 12px; }
+.hub-ranking-list li.is-top { border-color: #c9a8ff88; background: #221d30; }
+.hub-ranking-list b { color: #d9bd7c; text-align: center; }
+.hub-ranking-list strong { color: #f6efd9; }
+.hub-ranking-list span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #d7cfb8; }
+.hub-ranking-list small { color: #a59d86; font-variant-numeric: tabular-nums; }
+.hub-ranking-empty { margin: 0; font-size: 11px; color: #958e79; line-height: 1.5; }

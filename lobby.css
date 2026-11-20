@@ -124,3 +124,4 @@
 
 .map-skin-option.is-locked{opacity:.55;filter:grayscale(.7);cursor:not-allowed}
 .map-skin-option .map-skin-lock{display:block;font-size:10px;color:#c9b88f}
+.profile-name-saved { margin-left: 6px; color: #8fd6a0; font-size: 12px; }
