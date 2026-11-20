@@ -61,3 +61,11 @@
 
 .multi-ready{margin-left:4px;padding:0 6px;border-radius:4px;font-size:11px;color:#a59d86;background:#121c1f}
 .multi-ready.is-on{color:#9fe0a6;background:#1d3324}
+
+/* room mode picker (lobby) */
+.multi-modes{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}
+.multi-mode{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:6px 8px;border:1px solid #4f5d55;background:#101a1b;color:#d7cfb9;font:inherit;text-align:left;cursor:pointer}
+.multi-mode b{font-size:14px;color:#f2e6c6}.multi-mode small{font-size:10px;color:#8fa79f;line-height:1.3}
+.multi-mode.is-on{border-color:#f0cb82;background:linear-gradient(90deg,#3b3220,#1d2a26)}
+.multi-mode:disabled{cursor:default}.multi-mode:disabled:not(.is-on){opacity:.55}
+.multi-final-bonus{color:#f0cb82;list-style:none}

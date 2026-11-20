@@ -4,6 +4,8 @@
 // 방장이 '방 시계'를 돌려 라운드 시작과 배속을 정한다. 그래서 모두가 같은 순간에 라운드를 시작하고, 전투는 멈추지 않는다.
 const Multiplayer=(()=>{
  const MAX_PLAYERS=4,PREFIX='rift-guard-v1-',CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',STATE_INTERVAL=1000,KEEPALIVE=3000,STALE=10000,CLOCK_TICK=250,VIEW_INTERVAL=200,CHAT_MAX=80,CHAT_KEEP=50;
+ // 방 모드: 'standard'(일반) 또는 'versus'(경쟁, versus.js). 방장이 로비에서 고르고 명단·시작 메시지로 모두에게 맞춘다.
+ let roomMode='standard',profiles={};
  let seen={},lastSentAt=0,peer=null,host=false,code='',selfId='',hostConn=null,conns=new Map(),players=[],states={},started=false,theme=null,status='',stateTimer=null;
  // 방장 전용: 방 시계, 배속 요청, 관전 연결
  let clock=null,clockTimer=null,speedReq={},appliedSpeed=1,watchers={};
@@ -40,16 +42,20 @@ const Multiplayer=(()=>{
  // conn.self: 방장 자신이 보낸 메시지(sendToHost)를 같은 경로로 처리한다.
  function onHostData(conn,msg){if(!msg||typeof msg!=='object'||(!conn.self&&!conns.has(conn.peer)))return;let from=conn.peer;
   if(msg.t==='hello'&&!conn.self){if(players.some(p=>p.id===from)){broadcastRoster();return}let base=String(msg.name||'플레이어').slice(0,10),name=base;for(let i=2;players.some(p=>p.name===name);i++)name=base+i;players.push({id:from,name,hash:String(msg.hash||'').slice(0,16)});ready[from]=false;broadcastRoster();return}
-  if(msg.t==='ready'&&!conn.self){if(!started){ready[from]=!!msg.v;broadcastRoster()}return}
+  if(msg.t==='ready'&&!conn.self){if(!started){ready[from]=!!msg.v;if(msg.profile&&typeof msg.profile==='object')profiles[from]={levels:msg.profile.levels||{},stars:msg.profile.stars||{}};broadcastRoster()}return}
   if(msg.t==='state'&&!conn.self){let s=sanitizeState(msg.s);noteState(from,s);broadcast({t:'state',from,s},from);recomputeSpeed();render();return}
   if(msg.t==='speedReq'){speedReq[from]=[1,2,3].includes(msg.v)?msg.v:1;recomputeSpeed();return}
   if(msg.t==='chat'){let text=cleanChat(msg.text);if(!text)return;let line={t:'chat',from,name:nameOf(from),text};broadcast(line);addChat(line);return}
   if(msg.t==='watch'){for(let id of Object.keys(watchers))watchers[id].delete(from);let target=typeof msg.target==='string'&&players.some(p=>p.id===msg.target)&&msg.target!==from?msg.target:null;if(target)(watchers[target]=watchers[target]||new Set()).add(from);updateStreams();return}
-  if(msg.t==='view'&&!conn.self){forwardView(from,msg.s);return}}
+  if(msg.t==='view'&&!conn.self){forwardView(from,msg.s);return}
+  if(msg.t==='coopCmd'){if(started&&roomMode==='coop'&&typeof Coop==='object')Coop.onCommand(from,msg.cmd);return}
+  if(msg.t==='coopPing'){if(!started||roomMode!=='coop')return;let ping={t:'coopPing',from,x:+msg.x||0,y:+msg.y||0};broadcast(ping);if(typeof Coop==='object')Coop.onPing(from,ping.x,ping.y);return}
+  if(msg.t==='hinder'){let to=String(msg.to||'');if(!started||to===from||!players.some(p=>p.id===to))return;sendTo(to,{t:'hinder',from,fromName:nameOf(from),kind:String(msg.kind||'')});return}
+  if(msg.t==='hinderResult'){let to=String(msg.to||'');if(!players.some(p=>p.id===to))return;sendTo(to,{t:'hinderResult',from,kind:String(msg.kind||''),blocked:!!msg.blocked});return}}
  function dropGuest(id){if(!peer)return;if(!conns.has(id)&&!players.some(p=>p.id===id))return;conns.delete(id);delete ready[id];for(let t of Object.keys(watchers))watchers[t].delete(id);delete watchers[id];let player=players.find(p=>p.id===id);if(started&&player){if(states[id])states[id].left=true;else states[id]={...sanitizeState({name:player.name}),left:true}}else{players=players.filter(p=>p.id!==id);delete states[id]}broadcastRoster();updateStreams();recomputeSpeed();if(player&&started)systemChat(player.name+' 님이 나갔습니다.');}
  function broadcast(msg,except){for(let [id,c] of conns)if(id!==except&&c.open)c.send(msg)}
  function sendTo(id,msg){if(id===selfId)onGuestData(msg,true);else{let c=conns.get(id);if(c?.open)c.send(msg)}}
- function broadcastRoster(){broadcast({t:'roster',players,ready,difficulty:difficultyId(),left:Object.keys(states).filter(id=>states[id].left)});render()}
+ function broadcastRoster(){broadcast({t:'roster',players,ready,difficulty:difficultyId(),mode:roomMode,left:Object.keys(states).filter(id=>states[id].left)});render()}
  // 재연결한 손님에게 현재 명단·배속·시계를 바로 보낸다.
  function rejoined(id){if(states[id]?.left){states[id].left=false;systemChat(nameOf(id)+' 님이 다시 연결했습니다.')}seen[id]=now();broadcastRoster();recomputeSpeed();if(clock)sendClock();updateStreams()}
  // 새로고침한 사람의 재입장: 토큰 해시가 맞는 명단 자리를 새 연결 ID로 옮겨 준다.
@@ -57,7 +63,7 @@ const Multiplayer=(()=>{
   let old=p.id,id=conn.peer;p.id=id;for(const m of [states,seen,speedReq,ready,prevEnded])if(old in m){m[id]=m[old];delete m[old]}for(const t of Object.keys(watchers))if(watchers[t].delete(old))watchers[t].add(id);if(watchers[old]){watchers[id]=watchers[old];delete watchers[old]}
   conns.delete(old);conns.set(id,conn);if(states[id])states[id].left=false;broadcast({t:'renamed',old,id},id);onGuestData({t:'renamed',old,id},true);conn.send({t:'welcome',players});systemChat(p.name+' 님이 게임에 다시 들어왔습니다.');rejoined(id)}
  const allReady=()=>players.length>=2&&players.every(p=>p.id===selfId||ready[p.id]);
- function startRoom(){if(!host||started)return;if(players.length<2){setStatus('다른 플레이어가 들어와야 시작할 수 있습니다.');return}if(!allReady()){setStatus('모든 참가자가 준비를 눌러야 시작할 수 있습니다.');return}let ids=Object.keys(ManmulThemes.themes);theme=ids[Math.floor(Math.random()*ids.length)];let msg={t:'start',difficulty:difficultyId(),theme,seed:Math.floor(Math.random()*2**31)};broadcast(msg);launch(msg);startClock()}
+ function startRoom(){if(!host||started)return;if(players.length<2){setStatus('다른 플레이어가 들어와야 시작할 수 있습니다.');return}if(!allReady()){setStatus('모든 참가자가 준비를 눌러야 시작할 수 있습니다.');return}let ids=Object.keys(ManmulThemes.themes);theme=ids[Math.floor(Math.random()*ids.length)];let coopThemes=roomMode==='coop'?[theme,...ids.filter(t=>t!==theme).sort(()=>Math.random()-.5)].slice(0,Math.max(1,Math.min(4,players.length))):null;let msg={t:'start',difficulty:difficultyId(),mode:roomMode,themes:coopThemes,profiles:roomMode==='coop'?profiles:null,theme,seed:Math.floor(Math.random()*2**31)};broadcast(msg);launch(msg);startClock()}
 
  // ── 방 시계(방장) ──
  // 첫 라운드는 시작 연출(약 5.5초)과 준비 시간 30초 뒤에 열린다. 시계는 실제 시간 × 공유 배속으로 흐른다.
@@ -121,13 +127,13 @@ const Multiplayer=(()=>{
     note('incoming '+String(c.peer).slice(0,6)+' rec='+recovering);if(hostConn?.open&&!recovering&&now()-lastHostMsgAt<2500){refuse('host-alive');return}
     if(nextHostCandidates(old)[0]!==selfId){refuse('not-host');return}
     becomeHost(old);conns.set(c.peer,c);c.on('data',m=>onHostData(c,m));c.on('close',()=>dropGuest(c.peer));c.on('error',()=>dropGuest(c.peer));rejoined(c.peer)})});peer.on('disconnected',()=>{if(peer&&!peer.destroyed)peer.reconnect()})}
- function toggleReady(){if(host||started||!hostConn?.open)return;let v=!ready[selfId];ready[selfId]=v;hostConn.send({t:'ready',v});render()}
+ function toggleReady(){if(host||started||!hostConn?.open)return;let v=!ready[selfId];ready[selfId]=v;hostConn.send({t:'ready',v,profile:{levels:progression.levels,stars:starData.shards}});render()}
 
  // ── 방장 연결이 끊겼을 때 ──
  // 1) 먼저 같은 방장에게 다시 연결해 본다(내 인터넷이 잠깐 끊긴 경우).
  // 2) 안 되면 방장이 나간 것으로 보고, 명단 순서대로 남은 사람 중 첫 번째가 새 방장이 된다. 모두 같은 명단을 갖고 있어서 같은 사람을 고른다.
  // 복구하는 동안은 각자의 타이머로 진행되고(syncActive=false), 새 방장은 마지막 방 시계에서 이어서 돌린다.
- function onHostLost(conn){if(conn&&conn!==hostConn)return;if(!peer)return;if(!started){leave();setStatus('방장이 방을 닫았습니다.');return}if(recovering)return;let old=hostConn?.peer;lostHostId=old;hostConn=null;recovering=true;try{conn?.close?.()}catch(e){}
+ function onHostLost(conn){if(conn&&conn!==hostConn)return;if(!peer)return;if(started&&roomMode==='coop'){systemChat('방장과 연결이 끊겨 협동 게임이 끝났습니다.');if(typeof ended!=='undefined'&&!ended&&typeof end==='function')end();return}if(!started){leave();setStatus('방장이 방을 닫았습니다.');return}if(recovering)return;let old=hostConn?.peer;lostHostId=old;hostConn=null;recovering=true;try{conn?.close?.()}catch(e){}
   systemChat('방장과 연결이 끊겼습니다. 다시 연결하는 중…');if(typeof notice==='function'&&!inLobby)notice('방장과 연결이 끊겨 다시 연결하는 중입니다');render();recoverHost(old)}
  function connectTo(id,ms=CONNECT_TIMEOUT){return new Promise(resolve=>{if(!peer||peer.destroyed){resolve(null);return}let c,done=false,finish=v=>{if(done)return;done=true;if(!v)try{c?.close()}catch(e){}resolve(v)};try{c=peer.connect(id,{reliable:true})}catch(e){finish(null);return}c.on('open',()=>finish(c));c.on('error',()=>finish(null));setTimeout(()=>finish(null),ms)})}
  function nextHostCandidates(old){return players.filter(p=>p.id!==old&&!states[p.id]?.left).map(p=>p.id)}
@@ -145,7 +151,7 @@ const Multiplayer=(()=>{
  function onGuestData(msg,local){if(!msg||typeof msg!=='object')return;
   if(msg.t==='reject'&&!local){if(started&&(msg.reason==='host-alive'||msg.reason==='not-host')){candidateRefused();return}leave();setStatus(msg.reason||'입장할 수 없습니다.');return}
   if(announce&&!local&&(msg.t==='roster'||msg.t==='clock'||msg.t==='speed')){systemChat(announce);announce=null}
-  if(msg.t==='roster'&&!local){players=cleanPlayers(msg.players);let left=Array.isArray(msg.left)?msg.left:[];for(let id of Object.keys(states))states[id].left=left.includes(id);ready=msg.ready&&typeof msg.ready==='object'?{...msg.ready}:{};if(!started&&$('#difficultySelect')&&typeof difficulties==='object'&&Object.hasOwn(difficulties,msg.difficulty)){$('#difficultySelect').value=msg.difficulty;if(typeof renderDifficultyRecord==='function')renderDifficultyRecord()}render();return}
+  if(msg.t==='roster'&&!local){players=cleanPlayers(msg.players);if(!started&&['versus','standard','coop'].includes(msg.mode))roomMode=msg.mode;let left=Array.isArray(msg.left)?msg.left:[];for(let id of Object.keys(states))states[id].left=left.includes(id);ready=msg.ready&&typeof msg.ready==='object'?{...msg.ready}:{};if(!started&&$('#difficultySelect')&&typeof difficulties==='object'&&Object.hasOwn(difficulties,msg.difficulty)){$('#difficultySelect').value=msg.difficulty;if(typeof renderDifficultyRecord==='function')renderDifficultyRecord()}render();return}
   if(msg.t==='start'&&!local){launch(msg);return}
   if(msg.t==='state'&&!local){let from=msg.from||(hostConn?.peer);if(from&&from!==selfId){noteState(from,sanitizeState(msg.s));render()}return}
   if(msg.t==='clock'&&!local){applyClock(msg);return}
@@ -153,17 +159,22 @@ const Multiplayer=(()=>{
   if(msg.t==='chat'&&!local){addChat({from:msg.from,name:String(msg.name||''),text:cleanChat(msg.text)});return}
   if(msg.t==='renamed'){let {old,id}=msg;if(!old||!id||old===id)return;for(const m of [states,seen,prevEnded])if(old in m){m[id]=m[old];delete m[old]}if(watching===old){watching=id;if(typeof spectate!=='undefined'&&spectate?.id===old)spectate.id=id}render();return}
   if(msg.t==='stream'){setStreaming(!!msg.on);return}
+  if(msg.t==='coopState'){if(typeof Coop==='object')Coop.applySnapshot(msg.s,msg.p);return}
+  if(msg.t==='coopNote'){if(typeof Coop==='object')Coop.onNote(msg.texts);return}
+  if(msg.t==='coopPing'&&!local){if(typeof Coop==='object')Coop.onPing(msg.from,+msg.x||0,+msg.y||0);return}
+  if(msg.t==='hinder'){let r=typeof Versus==='object'?Versus.receive(msg):{blocked:true};send({t:'hinderResult',to:msg.from,kind:msg.kind,blocked:!!r.blocked});return}
+  if(msg.t==='hinderResult'){if(typeof Versus==='object')Versus.result(msg);return}
   if(msg.t==='view'){if(msg.from&&msg.from===watching&&typeof setSpectateView==='function')setSpectateView(msg.from,sanitizeView(msg.s));return}}
 
  // ── 게임 시작·상태 공유 ──
  function launch(msg){if(started)return;started=true;theme=typeof ManmulThemes==='object'&&ManmulThemes.themes[msg.theme]?msg.theme:null;let d=typeof difficulties==='object'&&Object.hasOwn(difficulties,msg.difficulty)?msg.difficulty:'normal';if($('#difficultySelect'))$('#difficultySelect').value=d;for(let p of players)seen[p.id]=now();
   if(typeof setBossOrderSeed==='function')setBossOrderSeed(Number.isFinite(msg.seed)?msg.seed:NaN);
   mySpeedReq=1;appliedSpeed=1;speedReq={};chatLog=[];localEnd=null;myResultHtml='';finalShown=false;prevEnded={};
-  beginRiftRun(d);if(typeof setSharedSpeed==='function')setSharedSpeed(1);stopTimer(stateTimer);stateTimer=every(sendState,STATE_INTERVAL);sendState();systemChat('게임이 시작되었습니다. 라운드는 모두 함께 시작합니다.');render()}
+  roomMode=['versus','coop'].includes(msg.mode)?msg.mode:'standard';beginRiftRun(d);if(roomMode==='versus'&&typeof Versus==='object')Versus.start();if(roomMode==='coop'&&typeof Coop==='object')Coop.start(msg,players,selfId,host);if(typeof setSharedSpeed==='function')setSharedSpeed(1);stopTimer(stateTimer);stateTimer=every(sendState,STATE_INTERVAL);sendState();systemChat('게임이 시작되었습니다. 라운드는 모두 함께 시작합니다.');render()}
  function noteState(id,s){let was=prevEnded[id];states[id]=s;seen[id]=now();if(s.ended&&!was){prevEnded[id]=true;systemChat(`${s.name} 님이 ${s.won?'클리어했습니다!':'탈락했습니다.'}`)}checkFinal()}
  function snapshot(){let byGrade={};for(let u of units){let g=types[u.type]?.grade;if(g)byGrade[g]=(byGrade[g]||0)+1}let top=ManmulRoster.grades.slice().reverse().find(g=>byGrade[g]);let best=units.map(u=>types[u.type]).filter(Boolean).sort((a,b)=>ManmulRoster.grades.indexOf(b.grade)-ManmulRoster.grades.indexOf(a.grade)).slice(0,3).map(t=>({id:t.id,name:t.name,grade:t.grade}));
-  return {name:myName(),mapSkin:playerProfile.mapSkin,wave,maxWave,enemies:enemies.length,gold,units:units.length,topGrade:top||null,best,ended,won:localEnd==='won'||(ended&&wave>=maxWave&&enemies.length===0),test:!!testRun}}
- function sanitizeState(s){s=s&&typeof s==='object'?s:{};let n=(v,max=1e9)=>Number.isFinite(+v)?Math.max(0,Math.min(max,Math.floor(+v))):0;let grades=typeof ManmulRoster==='object'?ManmulRoster.grades:[];return {name:String(s.name||'플레이어').slice(0,12),mapSkin:typeof mapSkins==='object'&&Object.hasOwn(mapSkins,s.mapSkin)?s.mapSkin:'forest',wave:n(s.wave,999),maxWave:n(s.maxWave,999),enemies:n(s.enemies,9999),gold:n(s.gold),units:n(s.units,999),topGrade:grades.includes(s.topGrade)?s.topGrade:null,best:Array.isArray(s.best)?s.best.slice(0,3).filter(b=>b&&types[b.id]).map(b=>({id:b.id,name:types[b.id].name,grade:types[b.id].grade})):[],ended:!!s.ended,won:!!s.won,test:!!s.test,left:false}}
+  return {name:myName(),mapSkin:playerProfile.mapSkin,wave,maxWave,enemies:enemies.length,gold,units:units.length,topGrade:top||null,best,ended,vs:typeof Versus==='object'?Versus.snapshot():null,won:localEnd==='won'||(ended&&wave>=maxWave&&enemies.length===0),test:!!testRun}}
+ function sanitizeState(s){s=s&&typeof s==='object'?s:{};let n=(v,max=1e9)=>Number.isFinite(+v)?Math.max(0,Math.min(max,Math.floor(+v))):0;let grades=typeof ManmulRoster==='object'?ManmulRoster.grades:[];return {name:String(s.name||'플레이어').slice(0,12),mapSkin:typeof mapSkins==='object'&&Object.hasOwn(mapSkins,s.mapSkin)?s.mapSkin:'forest',wave:n(s.wave,999),maxWave:n(s.maxWave,999),enemies:n(s.enemies,9999),gold:n(s.gold),units:n(s.units,999),topGrade:grades.includes(s.topGrade)?s.topGrade:null,best:Array.isArray(s.best)?s.best.slice(0,3).filter(b=>b&&types[b.id]).map(b=>({id:b.id,name:types[b.id].name,grade:types[b.id].grade})):[],ended:!!s.ended,won:!!s.won,test:!!s.test,vs:s.vs&&typeof s.vs==='object'?{dmg:n(s.vs.dmg),done:!!s.vs.done,killAt:Number.isFinite(+s.vs.killAt)&&s.vs.killAt!==null?+s.vs.killAt:null,how:['survivor','final'].includes(s.vs.how)?s.vs.how:null}:null,left:false}}
  let lastSent='';
  function sendState(force){if(!started||!peer)return;let s=snapshot(),key=JSON.stringify(s);if(!force&&key===lastSent&&now()-lastSentAt<KEEPALIVE)return;lastSent=key;lastSentAt=now();if(host){broadcast({t:'state',from:selfId,s});recomputeSpeed()}else if(hostConn?.open)hostConn.send({t:'state',s});render()}
 
@@ -179,8 +190,8 @@ const Multiplayer=(()=>{
  function addSpectateButton(){let foot=$('#modalContent .ui-modal-foot');if(!foot||foot.querySelector?.('.multi-spectate'))return;if(!othersPlaying())return;foot.insertAdjacentHTML?.('afterbegin','<button type="button" class="ui-btn-ghost multi-spectate" onclick="Multiplayer.spectateNext()">관전하기</button>');myResultHtml=$('#modalContent').innerHTML}
  function showMyResult(){if(!myResultHtml)return;stopWatching();$('#modalContent').innerHTML=myResultHtml;$('#modal')?.classList.remove('hidden')}
  function checkFinal(){if(finalShown||!started||!localEnd||othersPlaying())return;finalShown=true;stopWatching();
-  let rows=[{...snapshot(),name:myName(),self:true},...players.filter(p=>p.id!==selfId).map(p=>({...(states[p.id]||{wave:0}),name:p.name,left:!!states[p.id]?.left}))].sort((a,b)=>(b.won-a.won)||(b.wave-a.wave)||((a.enemies||0)-(b.enemies||0)));
-  let list=rows.map((r,i)=>`<li class="${r.self?'is-self':''}"><b>${i+1}위</b> ${esc(r.name)}${r.self?' (나)':''} <span>${r.won?'클리어':r.left&&!r.ended?'연결 끊김':`${r.wave}라운드 탈락`}</span></li>`).join('');
+  let rows=[{...snapshot(),name:myName(),self:true},...players.filter(p=>p.id!==selfId).map(p=>({...(states[p.id]||{wave:0}),name:p.name,left:!!states[p.id]?.left}))];const versus=roomMode==='versus'&&typeof Versus==='object';if(roomMode==='coop'&&typeof Coop==='object'){$('#modalContent').innerHTML=`${typeof modalOpen==='function'?modalOpen({eyebrow:'CO-OP',title:'협동 결과',variant:'result-modal'}):''}<p class="ui-modal-lead">${rows.some(r=>r.won)?'팀이 균열을 지켜냈습니다!':`${Math.max(...rows.map(r=>r.wave||0))}라운드에서 팀이 무너졌습니다.`}</p><h3 class="mission-group">기여도 (준 피해)</h3><ol class="coop-contrib">${Coop.contributionHtml()}</ol>${typeof modalClose==='function'?modalClose('<button type="button" class="ui-btn-ghost" onclick="Multiplayer.showMyResult()">내 결과 보기</button><button type="button" class="ui-btn-primary" onclick="location.reload()">로비로</button>'):''}`;$('#modal')?.classList.remove('hidden');return}rows=versus?Versus.rankRows(rows):rows.sort((a,b)=>(b.won-a.won)||(b.wave-a.wave)||((a.enemies||0)-(b.enemies||0)));let myRank=rows.findIndex(r=>r.self)+1,bonus=versus?Versus.onFinalRank(myRank):0;
+  let list=rows.map((r,i)=>`<li class="${r.self?'is-self':''}"><b>${i+1}위</b> ${esc(r.name)}${r.self?' (나)':''} <span>${versus?Versus.rowText(r):r.won?'클리어':r.left&&!r.ended?'연결 끊김':`${r.wave}라운드 탈락`}</span></li>`).join('')+(bonus?`<li class="multi-final-bonus">순위 보상: 균열의 파편 +${bonus}</li>`:'');
   $('#modalContent').innerHTML=`${typeof modalOpen==='function'?modalOpen({eyebrow:'MULTIPLAYER',title:'최종 순위',variant:'result-modal'}):''}<ol class="multi-final">${list}</ol>${typeof modalClose==='function'?modalClose('<button type="button" class="ui-btn-ghost" onclick="Multiplayer.showMyResult()">내 결과 보기</button><button type="button" class="ui-btn-primary" onclick="location.reload()">로비로</button>'):''}`;
   $('#modal')?.classList.remove('hidden');systemChat('모든 플레이어가 끝났습니다.')}
 
@@ -204,7 +215,7 @@ const Multiplayer=(()=>{
    for(let p of players)seen[p.id]=now();if(mySpeedReq!==1)c.send({t:'speedReq',v:mySpeedReq});stopTimer(stateTimer);stateTimer=every(sendState,STATE_INTERVAL);sendState(true);setStatus('');systemChat('게임에 다시 들어왔습니다. 그동안 지나간 라운드의 적은 건너뜁니다.');render();return true}
   return failRejoin('방을 찾지 못했습니다. 게임이 끝났거나 모두 나간 것 같습니다.')}
  function failRejoin(text){leave();setStatus(text);return false}
- function leave(){stopTimer(stateTimer);stopTimer(clockTimer);stopTimer(viewTimer);stateTimer=clockTimer=viewTimer=null;let old=peer;peer=null;conns=new Map();hostConn=null;try{old?.destroy()}catch(e){}host=false;code='';selfId='';players=[];states={};seen={};started=false;theme=null;lastSent='';lastSentAt=0;clock=null;speedReq={};appliedSpeed=1;watchers={};mySpeedReq=1;chatLog=[];watching=null;streaming=false;localEnd=null;myResultHtml='';finalShown=false;prevEnded={};ready={};lastClock=null;lastHostMsgAt=0;recovering=false;lostHostId=null;announce=null;myToken='';pendingRejoin=new Map();if(typeof setBossOrderSeed==='function')setBossOrderSeed(NaN);render()}
+ function leave(){roomMode='standard';profiles={};if(typeof Versus==='object')Versus.reset();if(typeof Coop==='object')Coop.stop();stopTimer(stateTimer);stopTimer(clockTimer);stopTimer(viewTimer);stateTimer=clockTimer=viewTimer=null;let old=peer;peer=null;conns=new Map();hostConn=null;try{old?.destroy()}catch(e){}host=false;code='';selfId='';players=[];states={};seen={};started=false;theme=null;lastSent='';lastSentAt=0;clock=null;speedReq={};appliedSpeed=1;watchers={};mySpeedReq=1;chatLog=[];watching=null;streaming=false;localEnd=null;myResultHtml='';finalShown=false;prevEnded={};ready={};lastClock=null;lastHostMsgAt=0;recovering=false;lostHostId=null;announce=null;myToken='';pendingRejoin=new Map();if(typeof setBossOrderSeed==='function')setBossOrderSeed(NaN);render()}
  function fail(err){leave();let type=err?.type;setStatus(type==='browser-incompatible'?'이 브라우저는 P2P 연결을 지원하지 않습니다.':type==='network'||type==='server-error'||type==='socket-error'?'중계 서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.':err?.message||'연결에 실패했습니다.')}
 
  // ── 화면 ──
@@ -213,7 +224,7 @@ const Multiplayer=(()=>{
   if(!code||(!host&&!players.length)){box.innerHTML=`<div class="multi-head"><strong>멀티 플레이</strong></div>${msg||'<p class="multi-status">연결 중…</p>'}<div class="multi-row"><button type="button" onclick="Multiplayer.leave()">취소</button></div>`;return}
   let list=players.map(p=>`<li>${p.id===players[0]?.id?'<span class="multi-crown" title="방장">♛</span>':''}${esc(p.name)}${p.id===selfId?' <small>(나)</small>':''}${p.id===players[0]?.id?'':ready[p.id]?' <span class="multi-ready is-on">준비</span>':' <span class="multi-ready">대기</span>'}</li>`).join('');
   for(let i=players.length;i<MAX_PLAYERS;i++)list+='<li class="multi-empty">빈 자리</li>';
-  box.innerHTML=`<div class="multi-head"><strong>방 코드 <span class="multi-code">${esc(code)}</span></strong><small>${host?'코드를 친구에게 알려 주세요. 난이도는 방장이 정하고, 모두 준비하면 시작할 수 있습니다.':'준비를 누르면 방장이 시작할 수 있습니다.'}</small></div><ul class="multi-players">${list}</ul><div class="multi-row">${host?`<button type="button" class="multi-primary" onclick="Multiplayer.startRoom()" ${allReady()?'':'disabled'} title="${players.length<2?'다른 플레이어를 기다리는 중':allReady()?'':'모든 참가자가 준비해야 시작할 수 있습니다'}">함께 시작 (${players.length}명)</button>`:`<button type="button" class="${ready[selfId]?'':'multi-primary'}" onclick="Multiplayer.toggleReady()">${ready[selfId]?'준비 취소':'준비'}</button>`}<button type="button" onclick="Multiplayer.leave()">나가기</button></div>${msg}`}
+  box.innerHTML=`<div class="multi-head"><strong>방 코드 <span class="multi-code">${esc(code)}</span></strong><small>${host?'코드를 친구에게 알려 주세요. 난이도는 방장이 정하고, 모두 준비하면 시작할 수 있습니다.':'준비를 누르면 방장이 시작할 수 있습니다.'}</small></div><ul class="multi-players">${list}</ul><div class="multi-modes" role="radiogroup" aria-label="게임 모드">${[['standard','일반','각자 맵에서 같은 전장을 막고 순위를 겨룹니다'],['versus','경쟁','균열 게이지로 서로 방해합니다 · 100라운드 최후 생존'],['coop','협동','한 전장에서 2~4명이 함께 막습니다 · 인원만큼 적이 강해집니다']].map(([id,name,desc])=>`<button type="button" class="multi-mode${roomMode===id?' is-on':''}" role="radio" aria-checked="${roomMode===id}" ${!host?'disabled':''} onclick="Multiplayer.setMode('${id}')"><b>${name}</b><small>${desc}</small></button>`).join('')}</div><div class="multi-row">${host?`<button type="button" class="multi-primary" onclick="Multiplayer.startRoom()" ${allReady()?'':'disabled'} title="${players.length<2?'다른 플레이어를 기다리는 중':allReady()?'':'모든 참가자가 준비해야 시작할 수 있습니다'}">함께 시작 (${players.length}명)</button>`:`<button type="button" class="${ready[selfId]?'':'multi-primary'}" onclick="Multiplayer.toggleReady()">${ready[selfId]?'준비 취소':'준비'}</button>`}<button type="button" onclick="Multiplayer.leave()">나가기</button></div>${msg}`}
  function renderBoard(){let board=$('#multiBoard');if(!board)return;if(!started){board.classList.add('hidden');return}board.classList.remove('hidden');
   let mine=Object.assign(snapshot(),{self:true,id:selfId}),others=players.filter(p=>p.id!==selfId).map(p=>Object.assign(states[p.id]?Object.assign({},states[p.id]):{wave:0,maxWave,enemies:0,units:0,best:[],waiting:true},{id:p.id,name:p.name,left:!!states[p.id]?.left||stale(p.id)}));
   for(let id of Object.keys(states))if(!players.some(p=>p.id===id))others.push(Object.assign({},states[id],{id,left:true}));
@@ -223,7 +234,7 @@ const Multiplayer=(()=>{
    let skin=typeof mapSkins==='object'&&Object.hasOwn(mapSkins,r.mapSkin)?r.mapSkin:'forest',skinImage=skin==='forest'?'assets/ui/ancient-ruins-v1/outer-ground.webp':`assets/ui/map-skins/${skin}.webp`;
    let action=r.self?(watching?'<button type="button" class="multi-watch" onclick="Multiplayer.stopWatching()">내 맵</button>':''):r.left?'':`<button type="button" class="multi-watch${watching===r.id?' is-on':''}" onclick="Multiplayer.watch('${esc(r.id)}')">${watching===r.id?'관전 중':'관전'}</button>`;
    return `<div class="multi-card${r.self?' is-self':''}${r.ended||r.left?' is-out':''}${watching===r.id?' is-watched':''}" data-level="${level}"><div class="multi-card-top"><strong>${esc(r.name)}${r.self?' <small>(나)</small>':''}${r.test?' <small>테스트</small>':''}</strong><span>${state}</span></div><div class="multi-card-skin"><img src="${skinImage}" alt=""><span>${esc(typeof mapSkins==='object'?mapSkins[skin]:'')}</span></div><div class="multi-card-bar" aria-hidden="true"><i style="width:${Math.min(100,r.enemies)}%"></i></div><div class="multi-card-meta">몬스터 ${r.enemies} · 유닛 ${r.units}${r.best?.length?' · '+r.best.map(b=>`<span style="color:${typeof gradeColors==='object'?gradeColors[b.grade]||'':''}">${esc(b.name)}</span>`).join(', '):''}</div>${action}</div>`}).join('')}
- function render(){renderLobbyBox();renderBoard();renderChat()}
+ function render(){renderLobbyBox();renderBoard();renderChat();if(typeof HudLayout==='object')HudLayout.tick()}
 
  // 채팅 입력: Enter로 입력창을 열고 보내며, Esc로 닫는다. 입력 중에는 게임 단축키가 막힌다(game.js keydown).
  $('#multiChatForm')?.addEventListener?.('submit',e=>{e.preventDefault();let input=$('#multiChatInput');sendChat(input.value);input.value='';input.blur()});
@@ -232,7 +243,10 @@ const Multiplayer=(()=>{
  every(()=>{if(started){if(!host&&hostConn&&!recovering&&now()-lastHostMsgAt>HOST_SILENT)onHostLost(hostConn);renderBoard();checkFinal()}},STATE_INTERVAL);
  $('#difficultySelect')?.addEventListener('change',()=>{if(host&&!started)broadcastRoster()});
  render();
- return {createRoom,joinRoom,startRoom,leave,toggleReady,rejoin,roomSnapshot,watch,stopWatching,spectateNext,showMyResult,cycleSpeedRequest,sendChat,onLocalEnd,
+ // Sends a room message as this player (the host handles its own messages directly).
+ function send(msg){if(host)onHostData({peer:selfId,self:true},msg);else if(hostConn?.open)hostConn.send(msg)}
+ function setMode(m){if(!host||started||!['standard','versus','coop'].includes(m))return;roomMode=m;broadcastRoster();render()}
+ return {createRoom,joinRoom,startRoom,leave,toggleReady,rejoin,roomSnapshot,watch,stopWatching,spectateNext,showMyResult,cycleSpeedRequest,sendChat,onLocalEnd,send,setMode,sendState,sendTo,get mode(){return roomMode},get players(){return players},get states(){return states},get selfId(){return selfId},
   get inRoom(){return !!peer},get isHost(){return host},get started(){return started},get theme(){return started?theme:null},
   // 방장이 시계를 돌리는 동안(방장 자신이거나 방장과 연결된 동안)만 라운드·배속을 방에 맞춘다.
   get syncActive(){return started&&!recovering&&(host||!!hostConn?.open)},get recovering(){return recovering},get speed(){return appliedSpeed},

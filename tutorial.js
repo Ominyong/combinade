@@ -31,6 +31,7 @@ const ManmulTutorial=(()=>{
   {id:'boss',when:()=>!!upcomingBoss,title:'보스 예고',text:'다음 보스의 이름과 능력이 위쪽에 표시됩니다. 대응 팁을 보고 미리 유닛을 준비하세요. 보스는 10라운드마다 나옵니다.'},
   {id:'relic',when:()=>relicOffered(),title:'보상 카드',text:'보스를 잡을 때마다 카드 한 장을 고릅니다. 카드는 <b>전술·유물·경제·소환</b> 네 계열이고, 같은 계열을 <b>3장</b> 모으면 세트 효과가 켜집니다(창 위쪽에 진행도 표시). 모은 카드는 메뉴의 「보상 카드」에서 다시 볼 수 있습니다.'},
   {id:'ticket',when:()=>typeof ticketTotal==='function'&&ticketTotal()>0,title:'선택권',text:'<b>선택권</b>을 얻었습니다. 오른쪽 위 선택권 버튼으로 원하는 유닛을 골라 소환하세요. 쓰기 전까지 보관됩니다.'},
+  {id:'versus',when:()=>typeof Versus==='object'&&Versus.active,title:'경쟁 모드',text:'몬스터를 잡을 때마다 오른쪽 아래 <b>균열 게이지</b>가 찹니다. 게이지로 고른 상대에게 <b>방해</b>를 보내거나 <b>내 스킬</b>을 쓰세요. 마지막까지 버틴 사람이 이기고, 100라운드까지 둘 이상 남으면 최종 보스에게 60초 동안 준 피해로 순위를 가립니다.'},
   {id:'hunt',when:()=>wave>=2&&typeof huntReadyCount==='function'&&huntReadyCount()>0,title:'현상금 사냥',text:'오른쪽 위 <b>현상금</b> 버튼으로 현상금 보스를 직접 불러낼 수 있습니다. 제한 시간 안에 잡으면 골드·선택권을 받고, 놓치면 도망칩니다. 전력에 여유가 있을 때 부르세요.'},
   {id:'mission',when:()=>wave>=3&&typeof missionList==='object',title:'미션',text:'왼쪽 <b>미션</b> 카드에 거의 다 된 미션이 보입니다. 조건을 채우는 순간 보상을 바로 받고, 카드를 누르면 전체 목록과 받은 보상을 볼 수 있습니다.'},
   {id:'marks',when:()=>wave>=3&&markedEnemy(),title:'표식',text:'적 머리 위 <b>색 네모</b>가 표식입니다. 표식이 붙은 적을 다른 공격으로 때리면 반응이 터집니다. 도감(E)의 <b>표식</b> 버튼으로 붙이는 유닛·활용하는 유닛을 찾고, 「표식·반응 안내」에서 조합을 볼 수 있습니다.'},

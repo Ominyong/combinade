@@ -46,5 +46,7 @@ const pressure={defenseBase:5,defensePerWave:2.5,steelScale:.45,resistScale:1.25
  // Speed rifts send larger waves (enemies loop the path, so numbers - not speed - are what threatens the 100-enemy limit).
  // Capped so extreme (intensity 1.6) gets the same enemy count as hard (1.3) instead of 2.6x.
 function waveCountFactor(theme,intensity,wave=20){return theme==='speed'?1+Math.min(pressure.speedCountCap-1,pressure.speedCount*Math.max(0,intensity||0))*Math.min(1,Math.max(1,wave)/15):1}
- return {themes,bosses,abilityOf,pressure,waveCountFactor,choose,initialize,update,defenseMultiplier,mitigation,speedMultiplier};
+ // 협동 모드: a second (third, fourth) theme stacked on the same enemy — its stat change and pressure only.
+ function stack(e,theme,now,opts){if(!themes[theme])return;let t=themes[theme];e[t.stat]*=t.factor;applyPressure(e,theme,opts);if(t.stat==='max'||theme==='life')e.hp=e.max}
+ return {themes,bosses,abilityOf,pressure,waveCountFactor,choose,initialize,stack,update,defenseMultiplier,mitigation,speedMultiplier};
 });

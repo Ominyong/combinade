@@ -1023,3 +1023,51 @@ body:has(#multiBoard:not(.hidden)) .mission-panel .mission-near { display: none;
 .unit-details p { margin: 0; }
 .unit-details b { color: #f0cb82; margin-right: 4px; }
 .unit-details .star-row { color: #ffe08a; letter-spacing: -1px; }
+
+/* 경쟁 모드 panel (bottom right) */
+.versus-panel { right: 16px; bottom: 16px; width: 330px; padding: 8px 10px 10px; pointer-events: auto; border-color: #c4553f; }
+.vs-head { display: flex; justify-content: space-between; align-items: baseline; }
+.vs-head b { color: #ff9b7a; font-size: 14px; }
+.vs-head small { color: #e7dec7; font-size: 11px; }
+.vs-gauge { position: relative; display: grid; grid-template-columns: repeat(6,1fr); gap: 2px; height: 14px; margin: 4px 0 6px; padding: 2px; background: #0a0f10; border: 1px solid #3a4540; }
+.vs-gauge > span { position: absolute; left: 2px; top: 2px; bottom: 2px; background: linear-gradient(90deg,#8a2f22,#ff7a5a); opacity: .45; }
+.vs-gauge i { position: relative; border: 1px solid #4a3a30; }
+.vs-gauge i.is-on { background: #ff7a5a; border-color: #ffd0c2; box-shadow: 0 0 6px #ff7a5a88; }
+.vs-final { margin: 0 0 6px; padding: 3px 6px; border: 1px solid #f0cb82; color: #ffe6a8; font-size: 12px; text-align: center; }
+.vs-section { margin-top: 4px; }
+.vs-section > small { display: block; margin-bottom: 2px; color: #8fa79f; font-size: 10px; }
+.vs-targets { display: flex; flex-wrap: wrap; gap: 4px; }
+.vs-acts { display: grid; grid-template-columns: repeat(3,1fr); gap: 4px; }
+.versus-panel button.vs-target, .versus-panel button.vs-act { display: flex; flex-direction: column; align-items: flex-start; padding: 3px 6px; font: inherit; }
+.vs-target b, .vs-act b { font-size: 12px; color: #f2e6c6; }
+.vs-target small, .vs-act small { font-size: 10px; color: #a59d86; }
+.vs-act small { color: #ff9b7a; letter-spacing: 1px; }
+.versus-panel button.vs-target.is-on { border-color: #ff7a5a; background: #3a1d17; }
+.versus-panel button:disabled { opacity: .45; }
+/* In versus mode the gauge panel sits bottom-right: beginner hints move above it. */
+body:has(#versusPanel:not(.hidden)) .tutorial-hint { bottom: 360px; }
+
+/* 협동 모드 */
+.coop-bar { left: 16px; bottom: 16px; display: flex; align-items: center; gap: 4px; padding: 4px 8px; pointer-events: auto; }
+.coop-bar small { color: #8fa79f; font-size: 10px; margin-right: 4px; }
+.coop-bar button { padding: 2px 8px; font-size: 11px; }
+body.coop-mode #huntButton { display: none; }
+.coop-contrib { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.coop-contrib li { display: grid; grid-template-columns: 130px 1fr 120px; align-items: center; gap: 8px; padding: 4px 8px; border-left: 4px solid var(--own); background: #0f1718; font-size: 13px; }
+.coop-contrib b { color: var(--own); }
+.coop-bar i, .coop-contrib .coop-bar i { display: block; height: 100%; background: var(--own); }
+.coop-contrib .coop-bar { position: static; display: block; height: 8px; padding: 0; background: #0a1011; border: 1px solid #3a4540; }
+.coop-contrib small { text-align: right; color: #a9b3ad; }
+
+/* ---- 전투 화면 정리: two tidy side columns (hud-layout.js), fold buttons, folded states ---- */
+.multi-board, .multi-chat, .mission-panel { position: absolute; }
+.hud-fold { position: absolute; top: 4px; right: 4px; z-index: 2; width: 20px; height: 20px; padding: 0; border: 1px solid #4f5d55; background: #101a1b; color: #d7cfb9; font-size: 12px; line-height: 1; cursor: pointer; pointer-events: auto; }
+.hud-fold:hover { border-color: #f0cb82; color: #fff3cf; }
+.multi-board { pointer-events: auto; }
+.multi-board.is-folded .multi-card { display: none; }
+.multi-board.is-folded .multi-board-head::after { content: " · 접힘"; color: #8fa79f; font-size: 10px; }
+.multi-chat.is-folded { height: auto !important; }
+.multi-chat.is-folded .multi-chat-log { display: none; }
+.multi-chat .hud-fold { right: 6px; top: 6px; }
+.goal-tracker { overflow-y: auto; }
+.coop-bar.hidden { display: none; }

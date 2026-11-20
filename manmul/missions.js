@@ -52,7 +52,7 @@ function huntCardHtml(b){let st=huntState(b),w=currentWave(),cd=Math.ceil(huntCo
  <p class="hunt-reward"><small>현상금</small>${huntRewardText(b,w)}</p>${btn}</div>`}
 // A pending boss reward or the theme pick must be answered first; these windows never cover it.
 function missionWindowBlocked(){if(pendingRewards.length){showReward();return true}if(eventState.pending){showRunEvent();return true}return !!themePending}
-function openHunt(){if(inLobby||ended||missionWindowBlocked())return;if($('#modal').classList.contains('hidden')){missionPrevPause=paused;if(!multiActive())paused=true}
+function openHunt(){if(inLobby||ended||missionWindowBlocked())return;if(typeof Coop==='object'&&Coop.on){notice('협동 모드에서는 현상금 사냥이 아직 준비 중입니다');return}if($('#modal').classList.contains('hidden')){missionPrevPause=paused;if(!multiActive())paused=true}
  $('#modalContent').innerHTML=`${modalOpen({eyebrow:'BOUNTY HUNT',title:'현상금 사냥',close:'현상금 사냥 닫기',variant:'hunt-modal'})}<p class="ui-modal-lead">전력이 충분하다 싶으면 현상금 보스를 불러내 잡으세요. 제한 시간 안에 처치하면 현상금을 받고, 놓치면 도망칩니다. 소환은 무료지만 보스마다 재소환 시간이 있습니다.</p><div class="hunt-grid">${huntBosses.map(huntCardHtml).join('')}</div>${modalClose('<button class="ui-btn-primary" onclick="closeMissions()">닫기</button>')}`;$('#modal').classList.remove('hidden')}
 
 // ---- mission board ----
@@ -102,7 +102,7 @@ function missionGoldOf(r){return Math.round((r.gold||0)*(1+treeBonus('missionGol
 function grantMissionReward(r){if(r.gold)gold+=missionGoldOf(r);if(r.ticket)selectionTickets[r.ticket]+=r.n;if(r.unit){let before=uid;summonCardUnits(r.unit,1);let got=units.filter(u=>u.id>before).map(u=>types[u.type].name);return got.length?`${r.unit} 유닛 「${got.join(', ')}」`:missionRewardText(r)}return missionRewardText(r)}
 let missionChecking=false;
 // Mark every mission whose condition is now met (once each) and pay it.
-function missionCheck(){if(missionChecking||inLobby)return;missionChecking=true;try{mc().peakGold=Math.max(mc().peakGold,gold);
+function missionCheck(){if(missionChecking||inLobby||(typeof Coop==='object'&&Coop.on))return;missionChecking=true;try{mc().peakGold=Math.max(mc().peakGold,gold);
  for(const m of missionList){if(missionState.done[m.id]||missionExpired(m))continue;let [cur,max]=m.progress();if(cur<max)continue;
   missionState.done[m.id]=currentWave()||1;missionState.order.push(m.id);(missionState.got||(missionState.got={}))[m.id]=grantMissionReward(m.reward);globalThis.ManmulSound?.play('reward');
   notice(`${m.hidden?'히든 미션':'미션'} 달성! ${m.name} · ${missionState.got[m.id]} 획득`)}
@@ -119,7 +119,7 @@ function missionEvent(type,data){if(inLobby)return;let c=mc(),f=mf();
  else if(type==='roundStart'){if(currentWave()>1&&enemies.length>=85)f.edge=true}
  else if(type==='tick'){if(combatTime-(missionState.lastTick||0)<.5)return;missionState.lastTick=combatTime}
  missionCheck()}
-function missionTick(){huntTick();updateHuntButton();eventMaybeShow();missionEvent('tick')}
+function missionTick(){huntTick();updateHuntButton();eventMaybeShow();if(typeof Versus==='object')Versus.tick();if(typeof Coop==='object')Coop.tick();missionEvent('tick')}
 // Right-panel button shows how many bounty bosses can be summoned right now.
 let huntButtonKey='';
 function updateHuntButton(){let b=typeof document!=='undefined'?$('#huntButton'):null;if(!b)return;let n=inLobby?0:huntReadyCount(),key=String(n);if(key===huntButtonKey)return;huntButtonKey=key;b.textContent=n?`현상금 ${n}`:'현상금';b.classList.toggle('has-ready',n>0)}
@@ -127,7 +127,7 @@ function missionDoneCount(){return Object.keys(missionState.done).length}
 // ---- HUD (left column): bounty bosses being hunted (health and time left), then the three missions closest to completion ----
 let missionHudKey='';
 function missionNearest(n=3){return missionList.filter(m=>!m.hidden&&!missionState.done[m.id]&&!missionExpired(m)).map(m=>{let [cur,max]=m.progress();return {m,cur,max,ratio:cur/max+(m.before?.5:0)}}).sort((a,b)=>b.ratio-a.ratio).slice(0,n)}
-function renderMissionHud(force=false){let box=typeof document!=='undefined'?$('#missionPanel'):null;if(!box)return;if(inLobby||currentWave()<1){if(!box.classList.contains('hidden'))box.classList.add('hidden');missionHudKey='';return}
+function renderMissionHud(force=false){let box=typeof document!=='undefined'?$('#missionPanel'):null;if(!box)return;if(inLobby||currentWave()<1||(typeof Coop==='object'&&Coop.on)){if(!box.classList.contains('hidden'))box.classList.add('hidden');missionHudKey='';return}
  let hunting=enemies.filter(e=>e.bountyId&&e.hp>0),near=missionNearest(),key=JSON.stringify([near.map(x=>[x.m.id,x.cur]),hunting.map(e=>[e.id,Math.ceil(e.hp/e.max*50),Math.ceil(e.expireAt-combatTime)]),missionDoneCount()]);if(!force&&key===missionHudKey)return;missionHudKey=key;box.classList.remove('hidden');
  let b=hunting.length?`<div class="hunt-hud"><div class="mission-head"><b>현상금 사냥</b><small>${hunting.length>1?hunting.length+'마리':''}</small></div>${hunting.map(e=>{let boss=huntBoss(e.bountyId),left=Math.max(0,Math.ceil(e.expireAt-combatTime));return `<div class="hunt-row" style="--hunt:${boss.color}" title="${huntRewardText(boss,e.bountyWave)}"><b>${boss.name}</b><span class="hunt-hp"><i style="width:${Math.max(0,e.hp/e.max*100).toFixed(1)}%"></i></span><small class="${left<=10?'is-urgent':''}">${left}초</small></div>`}).join('')}${hunting.length===1?`<small class="hunt-reward-line">${huntRewardText(huntBoss(hunting[0].bountyId),hunting[0].bountyWave)}</small>`:''}</div>`:'';
  let rows=near.map(({m,cur,max})=>`<li><span>${m.name}${m.before?` <em>${m.before}R 전</em>`:''}</span><span class="mission-bar"><i style="width:${Math.min(100,cur/max*100).toFixed(0)}%"></i><span>${Math.min(cur,max)}/${max}</span></span></li>`).join('');
