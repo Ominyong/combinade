@@ -14,7 +14,7 @@ const treeCategories={
  rift:{name:'균열',tags:'현상금 · 미션 · 지원',flavor:'균열을 오래 지켜 온 수호자만 아는 요령입니다. 사냥과 의뢰, 비상시의 대비를 익힙니다.',icon:'rift',color:'#e78fc8'}
 };
 const treeEffectText={
- power:v=>`모든 유닛 공격력 +${v}%`,physical:v=>`물리 유닛 공격력 +${v}%`,magic:v=>`마법 유닛 공격력 +${v}%`,boss:v=>`보스 대상 피해 +${v}%`,
+ power:v=>`모든 유닛 공격력 +${v}%`,physical:v=>`물리 유닛 공격력 +${v}%`,magic:v=>`마법 유닛 마력 +${v}%`,boss:v=>`보스 대상 피해 +${v}%`,
  speed:v=>`공격속도 +${v}%`,burn:v=>`화상 피해 +${v}%`,slow:v=>`감속 효과 +${v}%`,armor:v=>`방어력 감소 효과 +${v}%`,resist:v=>`마법 저항력 감소 효과 +${v}%`,
  startGold:v=>`시작 골드 +${v}`,income:v=>`라운드 시작 골드 +${v}`,bossGold:v=>`보상 카드로 받는 골드 +${v}%`,sale:v=>`유닛 판매 가격 +${v}%`,convert:v=>`같은 등급 변환 비용 -${v}%`,
  killGold:v=>`일반 몬스터 처치 시 ${v}% 확률로 골드 +1`,shard:v=>`전투에서 얻는 파편 +${v}%`,

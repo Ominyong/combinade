@@ -60,5 +60,9 @@
   return main;
  }
  function skillName(id,fallback){return skillNames[id]||fallback}
- return {skillNames,skillName,clean,skillDescription,describeBasic};
+ // 마법 유닛의 위력은 「마력」, 물리 유닛은 「공격력」으로 부른다. 마법 유닛 설명 속 자기 피해 수치(공격력 N%)도 마력으로 바꾼다.
+ // 아군에게 주는 버프(…아군 공격력 N% 증가, 공격력 +N%)는 그대로 둔다.
+ function powerLabel(type){return type==='마법'?'마력':'공격력'}
+ function forDamageType(text,type){if(type!=='마법'||!text)return text;return String(text).replace(/공격력(\s*)(\d+(?:\.\d+)?%)/g,(m,sp,v,at,all)=>/아군[^.;·]{0,14}$/.test(all.slice(0,at))?m:'마력'+sp+v)}
+ return {skillNames,skillName,clean,skillDescription,describeBasic,powerLabel,forDamageType};
 });

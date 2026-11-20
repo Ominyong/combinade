@@ -16,7 +16,7 @@
  // gold/tickets/summon/power → one-off or stacking card effects handled in game.js.
  const cards={
   physical:{name:'물리 전술',family:'tactic',rarity:'common',icon:'물',effect:'stat',max:3,description:'물리 유닛 공격력 +8%'},
-  magic:{name:'마법 전술',family:'tactic',rarity:'common',icon:'마',effect:'stat',max:3,description:'마법 유닛 공격력 +8%'},
+  magic:{name:'마법 전술',family:'tactic',rarity:'common',icon:'마',effect:'stat',max:3,description:'마법 유닛 마력 +8%'},
   speed:{name:'신속 공격',family:'tactic',rarity:'common',icon:'속',effect:'stat',max:3,description:'공격속도 +5%'},
   burn:{name:'화상 증폭',family:'tactic',rarity:'common',icon:'화',effect:'stat',max:3,description:'화상 피해 +12%'},
   slow:{name:'감속 전술',family:'tactic',rarity:'common',icon:'감',effect:'stat',max:3,description:'감속 효과 +8%'},

@@ -23,7 +23,7 @@ const runEvents={
   {id:'ticket',name:'선택권 상자',desc:()=>wave>=30?'매직 선택권 1장':'노말 선택권 1장',apply:()=>{selectionTickets[wave>=30?'magic':'normal']++}}]},
  drill:{name:'훈련 교관',icon:'훈',color:'#ef8f6a',flavor:'노련한 교관이 이번 전투 동안 한 가지만 가르쳐 주겠다고 합니다.',options:[
   {id:'physical',name:'검술 훈련',desc:'이번 판 동안 물리 유닛 공격력 +6%',apply:()=>{eventState.bonus.physical+=.06}},
-  {id:'magic',name:'마력 훈련',desc:'이번 판 동안 마법 유닛 공격력 +6%',apply:()=>{eventState.bonus.magic+=.06}}]},
+  {id:'magic',name:'마력 훈련',desc:'이번 판 동안 마법 유닛 마력 +6%',apply:()=>{eventState.bonus.magic+=.06}}]},
  smith:{name:'떠돌이 대장장이',icon:'대',color:'#b8c4cc',flavor:'모루를 짊어진 대장장이가 일거리를 찾고 있습니다.',options:[
   {id:'free',name:'무료 강화',desc:'유닛이 가장 많은 등급을 1단계 강화합니다',need:()=>!!eventMainGrade(),needText:'강화할 수 있는 등급 없음',apply:()=>{let g=eventMainGrade();if(g)gradeLevels[g]++}},
   {id:'deal',name:'단골 계약',desc:'이번 판 동안 등급 강화 비용 -15%',apply:()=>{eventState.bonus.upgrade+=.15}}]},
