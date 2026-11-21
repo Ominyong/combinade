@@ -1,0 +1,147 @@
+/* 도트 UI 레이어: 다른 스타일시트보다 마지막에 불러온다.
+   원칙: 둥근 모서리·흐린 그림자·부드러운 그라데이션 대신 각진 모서리, 2px 단위 테두리, 계단식 그림자.
+   원본 1px = 화면 2px(유닛 표시 배율과 동일). 패널 프레임은 Codex 도트 9-slice가 오면 교체한다. */
+
+:root {
+  --px-ink: #070c0f;      /* 가장 어두운 외곽선 */
+  --px-rim: #b69a64;      /* 금빛 테두리 */
+  --px-fill: #17262b;     /* 패널 바탕 */
+  --px-hi: #ffffff1f;     /* 위·왼쪽 하이라이트 */
+  --px-lo: #00000066;     /* 아래·오른쪽 그림자 */
+  --px-drop: 4px 4px 0 #000a;
+  --px-text-shadow: 0 2px 0 #000;
+}
+
+/* ---------- 폰트: Galmuri를 전체에 적용 ---------- */
+body, button, input, select, textarea, .hub, .hub-profile, .profile-name input,
+.hud-stat strong, .actions .battle-action strong, .unit-header strong, .goal-heading strong, .round-banner strong {
+  font-family: "Galmuri HUD", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+}
+/* 도트 폰트는 자간을 줄이면 글자가 붙는다. */
+.hub h1, .actions .battle-action strong, .ui-modal .ui-modal-head h2 { letter-spacing: 0; }
+.hub h1 { font-size: 56px; line-height: 1.25; }
+
+/* ---------- 패널: 도트 9-slice 프레임 (12×12, 모서리 4칸 → 화면 8px) ---------- */
+.top, .right, .actions, .selected, .goal-tracker, .modal .panel,
+.hub-balance, .hub-profile, .mode-card, .hub-skill, .hub-dialog-panel, .hub-play, .hub-profile-panel {
+  border-style: solid;
+  border-width: 8px;
+  border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' shape-rendering='crispEdges'%3E%3Cpath fill='%23070c0f' d='M1 0h10v1H1zM1 11h10v1H1zM0 1h1v10H0zM11 1h1v10h-1z'/%3E%3Cpath fill='%23b69a64' d='M1 1h10v10H1z'/%3E%3Cpath fill='%2317262b' d='M2 2h8v8H2z'/%3E%3Cpath fill='%232c4246' d='M2 2h8v1H2zM2 3h1v7H2z'/%3E%3Cpath fill='%230c1518' d='M3 9h7v1H3zM9 3h1v6H9z'/%3E%3C/svg%3E") 4 fill / 8px / 0 stretch;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: var(--px-drop);
+}
+/* 보스 예고: 밝은 금빛 테두리 변형 */
+.boss-preview {
+  border-style: solid;
+  border-width: 8px;
+  border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' shape-rendering='crispEdges'%3E%3Cpath fill='%23070c0f' d='M1 0h10v1H1zM1 11h10v1H1zM0 1h1v10H0zM11 1h1v10h-1z'/%3E%3Cpath fill='%23f0cb82' d='M1 1h10v10H1z'/%3E%3Cpath fill='%232c2634' d='M2 2h8v8H2z'/%3E%3Cpath fill='%23463c4c' d='M2 2h8v1H2zM2 3h1v7H2z'/%3E%3Cpath fill='%23151219' d='M3 9h7v1H3zM9 3h1v6H9z'/%3E%3C/svg%3E") 4 fill / 8px / 0 stretch;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: var(--px-drop);
+}
+.mode-card:hover { transform: translateY(-2px); box-shadow: 4px 6px 0 #000a; }
+
+/* ---------- 버튼: 각진 2px 테두리 + 안쪽 베벨 ---------- */
+button { border-radius: 0; border-width: 2px; box-shadow: inset 2px 2px 0 var(--px-hi), inset -2px -2px 0 var(--px-lo); }
+button:active:not(:disabled) { box-shadow: inset 2px 2px 0 var(--px-lo), inset -2px -2px 0 var(--px-hi); }
+button:disabled { box-shadow: none; }
+/* 이미지 위에 얹는 버튼은 베벨을 넣지 않는다. */
+.selected button.fusion-arrow:not(.portrait):not(.skill-icon),
+.selected button.fusion-card[data-illustrated="true"]:not(.portrait):not(.skill-icon),
+.hub-profile, .mode-card, .portrait, .book-unit-link { box-shadow: none; }
+.mode-card, .hub-profile { box-shadow: var(--px-drop); }
+
+/* 전투 행동 막대 */
+.actions .battle-action { border: 2px solid transparent; border-radius: 0; box-shadow: none; }
+.actions .battle-action + .battle-action { border-left-color: #b6a8842e; }
+.actions .battle-action-primary { background: #2f6a52; border: 2px solid #a6e5bd; box-shadow: inset 2px 2px 0 #ffffff26, inset -2px -2px 0 #0000004d; }
+.actions .battle-action:hover:not(:disabled) { background: #3a5a4f; border-color: #d2c496; filter: none; }
+.actions .battle-action-primary:hover:not(:disabled) { background: #3a7d61; border-color: #d1f2ce; }
+.right #speed, .right #menuButton { border: 2px solid #baa77d; border-radius: 0; background: #1e3437; }
+.right #speed:hover, .right #menuButton:hover { filter: none; background: #2f4a48; border-color: #ead19a; }
+
+/* 선택 패널 툴바 버튼: 그라데이션·흐린 그림자 제거 */
+.selected .selection-toolbar button:not(.portrait):not(.skill-icon) {
+  border: 2px solid #ae9c73; border-radius: 0; background: #1f3233;
+  box-shadow: inset 2px 2px 0 var(--px-hi), inset -2px -2px 0 var(--px-lo), 2px 2px 0 #000a;
+}
+
+/* 모달 버튼과 선택 카드 */
+.modal button.ui-modal-close, .modal .reward-list > button, .result-stats { border-radius: 0; }
+.selected button.unit-recipe-card:not(.portrait):not(.skill-icon) { border-radius: 0; border-width: 2px; }
+.selected button.unit-recipe-card.is-ready:not(.portrait):not(.skill-icon) { box-shadow: inset 2px 2px 0 #ffffff26, inset -2px -2px 0 #0000004d; }
+.unit-recipe-card { border-radius: 0; }
+
+/* ---------- 조합 카드: 그림은 그대로, 테두리와 강조만 도트로 ---------- */
+.selected button.fusion-card:not(.portrait):not(.skill-icon) { border: 2px solid #a99877; border-radius: 0; }
+.selected button.fusion-card:not(.portrait):not(.skill-icon)::after {
+  inset: -4px; border: 2px solid #f0cb82; border-radius: 0;
+  box-shadow: 0 0 0 2px var(--px-ink), inset 0 0 0 2px var(--px-ink);
+  transition: none;
+}
+.selected button.fusion-card[data-illustrated="true"]:not(.portrait):not(.skill-icon),
+.selected button.fusion-card[data-illustrated="true"]:not(.portrait):not(.skill-icon):hover {
+  text-shadow: 2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000;
+}
+.fusion-portrait, .fusion-ingredient-icon { border-radius: 0; }
+
+/* ---------- 작은 요소: 둥근 모서리 제거 ---------- */
+.role-tag, .unit-portrait, .toast, .action-hint:not(:empty), .skill-tip, .recipe-tip,
+.mode-kicker i, .hub-skill-icon, .plate-swatch, .profile-option, .profile-name input, .profile-name button,
+.difficulty-choice select, .hub-dialog-close, .theme-reel-window, .mode-coming, .first-clear-reward,
+.selected .skill-icon, .goal-portrait, .ingredient-portrait, .portrait, .recipe-book button.book-unit-link {
+  border-radius: 0;
+}
+.skill-tip, .recipe-tip { border-width: 2px; box-shadow: var(--px-drop); }
+.selected .skill-icon { border-width: 2px; padding: 2px; } /* 스킬 아이콘은 원화(128px)를 부드럽게 축소해 쓴다 */
+.recipe-book button.book-unit-link:hover { box-shadow: 0 0 0 2px #e7d89c; }
+.toast { border-width: 2px; text-shadow: var(--px-text-shadow); }
+.mode-coming { border-width: 2px; }
+
+/* ---------- 글자 그림자: 흐림 대신 아래로 2px ---------- */
+.hub h1 { text-shadow: 0 4px 0 #000c; }
+.round-banner { text-shadow: var(--px-text-shadow); }
+.toast.is-fusion-warning { text-shadow: var(--px-text-shadow); }
+
+/* ---------- HUD 위협 게이지: 칸으로 끊긴 막대, 계단식으로 차오름 ---------- */
+.hud-gauge { position: relative; height: 6px; border-radius: 0; background: var(--px-ink); box-shadow: 0 0 0 1px #ffffff1a; }
+.hud-gauge::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 8px, var(--px-ink) 8px 10px); pointer-events: none; }
+.hud-gauge i { transition: width .25s steps(4, end), background-color .25s steps(1, end); }
+
+/* 강화 단계 표시: 회전한 마름모 대신 정사각 칸 */
+.upgrade-pips i { width: 8px; height: 8px; border-width: 2px; transform: none; }
+
+/* ---------- 스크롤바 ---------- */
+.unit-recipe-list::-webkit-scrollbar-thumb, .goal-tracker::-webkit-scrollbar-thumb,
+.goal-tracker::-webkit-scrollbar-track { border-radius: 0; }
+.goal-tracker::-webkit-scrollbar, .unit-recipe-list::-webkit-scrollbar { width: 8px; }
+
+/* ---------- 로비 ---------- */
+.mode-visual { background: #101c1d; }
+.mode-visual:after { display: none; }                       /* 22° 회전선은 계단이 깨진다 */
+.mode-orbit.orbit-one, .mode-orbit.orbit-two { border-radius: 0; border-width: 2px; }
+.mode-visual:before { border-width: 2px; }
+.mode-core { text-shadow: 0 4px 0 #6b4f1f; }
+.profile-icon { border-radius: 0; border-width: 2px; background: color-mix(in srgb, var(--icon-color) 22%, #0c171b); }
+.plate-moss   { background: #1c3427; }
+.plate-bronze { background: #3a2a1d; box-shadow: none; }
+.plate-silver { background: #36424a; box-shadow: none; }
+.plate-gold   { background: #4a3a17; box-shadow: none; }
+.hub-skill:after { width: 2px; }
+
+/* ---------- 도트 이미지 확대 규칙 (Codex 결과물 연결용) ---------- */
+img[src*="/pixel-v1/"], .pixelated { image-rendering: pixelated; }
+
+/* Pixel scrollbar: square bevelled gold thumb in a dark sunken track, no arrow buttons.
+   Chat log gets it explicitly; :where() gives every other scroll area in the stage the same look
+   without overriding ones that already have their own scrollbar style. */
+/* Chrome ignores ::-webkit-scrollbar once scrollbar-color is set, so the standard properties are for Firefox only. */
+@supports not selector(::-webkit-scrollbar) { .multi-chat-log, :where(#stage) * { scrollbar-width: thin; scrollbar-color: #9b8560 #0c1517; } }
+.multi-chat-log { padding-right: 4px; scrollbar-gutter: stable; }
+.multi-chat-log::-webkit-scrollbar, :where(#stage) ::-webkit-scrollbar { width: 8px; height: 8px; }
+.multi-chat-log::-webkit-scrollbar-track, :where(#stage) ::-webkit-scrollbar-track { background: #0c1517; box-shadow: inset 1px 0 0 #050a0b, inset -1px 0 0 #22363a; }
+.multi-chat-log::-webkit-scrollbar-thumb, :where(#stage) ::-webkit-scrollbar-thumb { background: #9b8560; border-radius: 0; box-shadow: inset 1px 1px 0 #d9c08c, inset -1px -1px 0 #5b4a2f; }
+.multi-chat-log::-webkit-scrollbar-thumb:hover, :where(#stage) ::-webkit-scrollbar-thumb:hover { background: #c3a874; }
+.multi-chat-log::-webkit-scrollbar-button, :where(#stage) ::-webkit-scrollbar-button { display: none; height: 0; }
+.multi-chat-log::-webkit-scrollbar-corner, :where(#stage) ::-webkit-scrollbar-corner { background: transparent; }

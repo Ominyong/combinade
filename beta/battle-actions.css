@@ -1,0 +1,1095 @@
+/* 전투 HUD: 작은 공통 슬롯과 읽기 쉬운 정보 계층. */
+:root { --hud-bg: #111e28ed; --hud-panel: #192c35f2; --hud-edge: #7a9b91a6; --hud-text: #f2f4e9; --hud-muted: #b8cac1; --hud-accent: #9bdcc4; --hud-gold: #f0cb82; }
+.top, .right, .selected, .goal-tracker, .boss-preview { background: var(--hud-bg); border-color: var(--hud-edge); border-radius: 8px; box-shadow: 0 5px 20px #0008, inset 0 1px #ffffff12; }
+.top { top: 12px; gap: 0; padding: 7px 10px; align-items: center; }
+.hud-stat { display: flex; flex-direction: column; gap: 2px; min-width: 90px; padding: 0 12px; border-right: 1px solid #8daca439; }
+.hud-stat:last-child { border-right: 0; }
+.hud-stat small { color: var(--hud-muted); font-size: 11px; line-height: 1.2; }
+.hud-stat strong { color: var(--hud-text); font-size: 15px; line-height: 1.25; font-variant-numeric: tabular-nums; }
+.hud-stat #gold { color: var(--hud-gold); }
+.hud-stat #count.danger { color: #ff8581; }
+.hud-wave { min-width: 200px; }
+.hud-wave strong { font-size: 13px; }
+.right { top: 12px; right: 12px; padding: 7px; }
+.right button { padding: 7px 9px; font-size: 12px; }
+.goal-tracker { top: 83px; }
+.boss-preview { top: 84px; border-color: #d9b96a; }
+.actions { bottom: 12px; display: flex; align-items: stretch; justify-content: center; gap: 3px; width: max-content; max-width: calc(1600px - 24px); overflow: visible; padding: 5px; border: 1px solid var(--hud-edge); border-radius: 10px; background: var(--hud-bg); box-shadow: 0 6px 22px #0009, inset 0 1px #ffffff12; }
+.actions .battle-action { box-sizing: border-box; flex: 0 1 128px; min-width: 110px; min-height: 58px; display: flex; align-items: center; justify-content: flex-start; gap: 5px; padding: 5px 7px; border: 1px solid #75958a70; border-radius: 5px; background: #203940; color: var(--hud-text); font: inherit; line-height: 1.2; text-align: left; }
+.actions .battle-action img { width: 36px; height: 36px; flex: none; object-fit: contain; pointer-events: none; }
+.actions .battle-action span { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; white-space: nowrap; }
+.actions .battle-action strong { font-size: 13px; }
+.actions .battle-action small { color: var(--hud-muted); font-size: 11px; }
+.actions .battle-action-primary { background: #285548; border-color: #a4d9c2; box-shadow: inset 0 0 12px #4e9e7844; }
+.actions #next { margin-left: 6px; }
+.actions .battle-action:hover:not(:disabled) { background-color: #355950; border-color: #c0e6cd; }
+.actions .battle-action:focus-visible, .right button:focus-visible { outline: 2px solid var(--hud-gold); outline-offset: 2px; }
+.actions .battle-action:disabled, .actions .battle-action.is-unavailable { opacity: .58; filter: grayscale(.45); }
+.action-hint:not(:empty) { position: absolute; bottom: calc(100% + 7px); left: 0; padding: 4px 8px; border: 1px solid #c5887e; border-radius: 4px; background: #432b30ed; color: #ffe0d7; font-size: 12px; white-space: nowrap; }
+.selected { bottom: 94px; overflow: visible; max-height: none; text-align: left; }
+.unit-header strong { font-size: 16px; }
+.unit-title, .unit-affiliation, .unit-section-label { font-size: 12px; }
+.target-modes button, .unit-sale button { font-size: 12px; }
+.toast { top: 75px; padding: 5px 10px; background: #14242ded; border: 1px solid #c6a7619c; border-radius: 5px; }
+
+
+@font-face { font-family: "Galmuri HUD"; src: url("assets/fonts/galmuri/Galmuri11.woff2") format("woff2"), url("assets/fonts/galmuri/Galmuri11.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Galmuri HUD"; src: url("assets/fonts/galmuri/Galmuri11-Bold.woff2") format("woff2"), url("assets/fonts/galmuri/Galmuri11-Bold.ttf") format("truetype"); font-weight: 700; font-display: swap; }
+.hud-stat strong, .actions .battle-action strong, .unit-header strong, .goal-heading strong { font-family: "Galmuri HUD", "Malgun Gothic", sans-serif; }
+.modal .panel { background: var(--hud-panel); border-color: var(--hud-edge); color: var(--hud-text); }
+.modal button, .selected button:not(.portrait):not(.skill-icon), .goal-tracker button { background: #29453f; border-color: #789f90; color: var(--hud-text); }
+.modal button:hover:not(:disabled), .selected button:not(.portrait):not(.skill-icon):hover, .goal-tracker button:hover { background: #3c6355; }
+/* HUD readability and shared visual hierarchy */
+.hud-stat strong, .actions .battle-action strong, .unit-header strong, .goal-heading strong { font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }
+.hud-wave strong { font-size: 14px; }
+.right { display: flex; align-items: center; gap: 6px; padding: 6px; }
+.right #speed, .right #menuButton { min-width: 45px; height: 42px; display: inline-flex; align-items: center; justify-content: center; padding: 0 10px; border: 1px solid #9aa79580; border-radius: 5px; background: #1c3034; color: #f6edcf; font-size: 14px; font-weight: 700; }
+.right #menuButton { font-size: 20px; }
+.right #rewardButton { border-color: #d1b377; color: #ffe0a0; }
+/* Selection tickets (placeholder look; final art by Codex). */
+.right #ticketButton { border-color: #8fc1e8; color: #cfe8ff; }
+.ticket-tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+.modal button.ticket-tab[aria-pressed="true"] { border-color: #f0d58f; color: #ffe9b0; }
+.ticket-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; max-height: 420px; overflow-y: auto; }
+.modal button.ticket-option { display: flex; align-items: center; gap: 8px; padding: 6px 8px; text-align: left; }
+.ticket-portrait { flex: none; width: 36px; height: 36px; image-rendering: pixelated; }
+.ticket-text { display: flex; flex-direction: column; min-width: 0; }
+.ticket-text small { color: #bdcbbf; font-size: 11px; line-height: 1.3; }
+.actions { gap: 5px; padding: 6px; border-color: #9c9a7980; background: #111d25f5; }
+.actions .battle-action { flex: 0 1 148px; min-width: 136px; min-height: 62px; gap: 7px; padding: 6px 9px; border-color: #8c998259; background: #233437; }
+.actions .battle-action img { width: 34px; height: 34px; }
+.actions .battle-action strong { font-size: 14px; letter-spacing: -.025em; }
+.actions .battle-action small { font-size: 12px; }
+.actions .battle-action-primary { background: #2b574a; border-color: #a9dcc3; }
+.actions .battle-action-primary strong { color: #f4ffe9; }
+.actions #next { margin-left: 8px; }
+.battle-menu { display: flex; flex-direction: column; gap: 9px; }
+.battle-menu h2 { margin: 0 0 8px; font-size: 21px; }
+.battle-menu-heading span { color: #a9c1b6; font-size: 12px; }
+.battle-menu > button { width: 100%; text-align: left; padding: 12px 14px; }
+.battle-menu > .menu-primary { background: #315c4f; border-color: #9bcdb3; }
+.battle-menu > .menu-exit { color: #ffccc2; border-color: #ad7973; }
+.setting-row { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 12px 0; }
+.setting-row span { display: flex; flex-direction: column; gap: 4px; }
+.setting-row small { color: #b7c9c1; }
+.setting-row input { width: 20px; height: 20px; accent-color: #88cbb0; }
+.setting-row input[type="range"] { width: 160px; flex: none; }
+
+/* Generated slate material unifies the HUD with the elemental battlefield. */
+.top, .right, .actions, .selected, .goal-tracker, .boss-preview, .modal .panel {
+  background-image: linear-gradient(#101b20ad, #101b20d9), url("assets/ui/materials/panel-surface.png");
+  background-size: cover;
+  border-color: #b69a64a6;
+  box-shadow: 0 5px 20px #0009, inset 0 1px #e8d4a02a;
+}
+.actions .battle-action, .right #speed, .right #menuButton {
+  background-image: linear-gradient(#1a292c99, #111b20c9), url("assets/ui/materials/panel-surface.png");
+  background-size: cover;
+  border-color: #a18c67aa;
+  color: #f4ead4;
+}
+.actions .battle-action-primary {
+  background-image: linear-gradient(#21634bb0, #163c31dd), url("assets/ui/materials/panel-surface.png");
+  border-color: #a2ddbe;
+}
+.actions .battle-action:hover:not(:disabled), .right #speed:hover, .right #menuButton:hover {
+  border-color: #ead19a;
+  filter: brightness(1.2);
+}
+.modal .panel { border-color: #b69a64; }
+/* One illustrated frame shared by the action bar and information panels. */
+.actions, .top, .right, .selected, .goal-tracker, .boss-preview, .modal .panel {
+  border-style: solid;
+  border-width: 11px 16px;
+  border-image: url("assets/ui/materials/hud-plate-9slice.png") 130 170 130 170 fill / 11px 16px / 0 stretch;
+  border-radius: 0;
+  background: #17262b;
+}
+.actions { gap: 0; padding: 2px 4px; }
+.actions .battle-action {
+  position: relative;
+  border: 1px solid transparent;
+  border-right-color: #b6a88438;
+  border-radius: 2px;
+  background: transparent;
+  box-shadow: none;
+  padding: 5px 9px;
+}
+.actions .battle-action:last-child { border-right-color: transparent; }
+.actions .battle-action-primary { background: #3b86643c; border: 1px solid #a6e5bd75; box-shadow: inset 0 0 12px #5eaa7c38; }
+.actions .battle-action:hover:not(:disabled) { background: #75988538; border-color: #d2c49683; }
+.actions #next { margin-left: 5px; }
+.hud-stat { border-color: #b9ad873b; }
+.right #speed, .right #menuButton { background: #1e3437aa; border-color: #baa77d78; }
+
+/* Keep the selected unit's information compact above the action bar. */
+.selected:has(.unit-header) {
+  width: min(620px, 1504px);
+  display: grid;
+  grid-template-columns: minmax(230px, 1fr) minmax(230px, 1fr);
+  grid-template-areas: "header header" "roles roles" "stats targets" "stats sale" "recipes recipes";
+  column-gap: 16px;
+  row-gap: 3px;
+  padding: 8px 12px;
+}
+.selected:has(.unit-header).hidden { display: none; }
+.selected .unit-header { grid-area: header; margin-bottom: 1px; }
+.selected > .role-tags { grid-area: roles; margin: 0 0 2px; }
+.selected .unit-info { grid-area: stats; gap: 16px; }
+.selected .unit-stats { min-width: 130px; }
+.selected .unit-stats > div { line-height: 1.5; }
+.selected .unit-skills { min-width: 90px; }
+.selected .target-modes { grid-area: targets; justify-content: flex-start; flex-wrap: wrap; margin: 0; }
+.selected .unit-sale { grid-area: sale; margin-top: 0; }
+.selected .unit-recipes { grid-area: recipes; text-align: left; }
+.selected .unit-recipes .portrait { width: 36px; height: 36px; margin-top: 2px; }
+.selected .unit-recipes:empty { display: none; }
+
+/* Reserve the bottom HUD zone and show the selected sprite as its identity. */
+.selected:has(.unit-header) { width: min(680px, 1504px); grid-template-columns: minmax(240px, 1fr) minmax(250px, 1fr); row-gap: 2px; padding: 6px 12px; }
+.unit-heading-main { display: flex; align-items: center; gap: 8px; }
+.unit-portrait { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; flex: none; border: 1px solid #ac9c73; border-radius: 4px; font-weight: bold; }
+.unit-grade { font-size: 11px; line-height: 1.2; }
+.selected .unit-info { align-items: flex-start; }
+.selected .skill-icon { width: 42px; height: 32px; font-size: 11px; }
+.selected .unit-recipes { display: flex; align-items: center; gap: 4px; }
+.unit-recipes-label { color: #b7c9c1; font-size: 11px; margin-right: 3px; }
+.selected .target-modes button[aria-pressed="true"] { background: #7aa88f; color: #10251d; border-color: #b8e2c7; }
+
+/* Wide screens keep selected-unit details beside the arena. */
+
+  .selected, .selected:has(.unit-header) {
+    left: auto;
+    right: 14px;
+    top: 110px;
+    bottom: auto;
+    transform: none;
+    width: 300px;
+    min-width: 0;
+    max-width: 300px;
+  }
+  .selected:has(.unit-header) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "header" "roles" "stats" "targets" "sale" "recipes";
+    row-gap: 5px;
+  }
+  .selected .unit-info { gap: 10px; }
+
+/* The selection panel replaces the action bar; the arena never rescales. */
+body:has(#selection:not(.hidden)) .actions { visibility: hidden; pointer-events: none; }
+.selected, .selected:has(.unit-header) { left: 50%; right: auto; top: auto; bottom: 12px; transform: translateX(-50%); max-width: min(680px,1504px); }
+.selected:has(.unit-header) { width: min(680px,1504px); grid-template-columns: minmax(230px,1fr) minmax(230px,1fr); grid-template-areas: "header header" "roles roles" "stats targets" "stats sale" "recipes recipes"; }
+.unit-header-actions { display: flex; gap: 10px; align-items: center; }
+.selected .selection-close { width: 28px; height: 28px; padding: 0; line-height: 1; font-size: 21px; }
+.selection-close-float { float: right; margin-left: 8px; }
+
+/* Selection replaces the action bar; the recipe list has its own right column. */
+.selected:has(.unit-panel-left) {
+  width: min(820px, 1536px); max-width: min(820px, 1536px);
+  display: grid; grid-template-columns: minmax(220px, .9fr) minmax(300px, 1.1fr);
+  grid-template-areas: none; gap: 12px; align-items: start; padding: 8px 12px;
+}
+.selected:has(.unit-panel-left).hidden { display: none; }
+.unit-panel-left { min-width: 0; }
+.unit-panel-left .unit-header { margin-bottom: 4px; }
+.unit-panel-left .role-tags { margin: 0 0 6px; }
+.unit-panel-left .unit-info { display: flex; gap: 16px; }
+.unit-panel-left .unit-sale { margin-top: 6px; }
+.unit-panel-recipes { min-width: 0; border-left: 1px solid #baa77d66; padding-left: 12px; }
+.unit-recipes-heading { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+.unit-recipes-heading strong { flex: 1; color: #f4e3b8; }
+.unit-recipes-heading button:not(.selection-close) { padding: 4px 8px; font-size: 12px; }
+.unit-recipe-list { max-height: 150px; overflow-y: auto; padding-right: 3px; }
+.unit-recipe-card { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid #a6946c50; }
+.recipe-result-portrait { width: 38px; height: 38px; }
+.unit-recipe-info { flex: 1; min-width: 0; font-size: 12px; }
+.unit-recipe-info strong { display: block; }
+.unit-recipe-ingredients { display: flex; flex-wrap: wrap; gap: 3px 8px; }
+.unit-recipe-ingredients .ingredient-row { min-width: 0; margin: 2px 0; gap: 4px; }
+.unit-recipe-ingredients .ingredient-portrait { width: 20px; height: 20px; }
+.unit-recipe-ingredients .ingredient-name { white-space: normal; }
+.unit-recipe-info small { font-size: 11px; }
+.selected .unit-combine { flex: none; padding: 6px 8px; font-size: 12px; }
+.unit-recipes-empty { margin: 8px 0; font-size: 12px; }
+
+/* Keep development controls clear of selection actions and match the recipe scrollbar to the HUD. */
+body:has(#selection:not(.hidden)) .test-controls { bottom: auto; top: 82px; left: 14px; }
+.unit-recipe-list { scrollbar-width: thin; scrollbar-color: #978460 #19272b; }
+.unit-recipe-list::-webkit-scrollbar { width: 7px; }
+.unit-recipe-list::-webkit-scrollbar-track { background: #19272b; }
+.unit-recipe-list::-webkit-scrollbar-thumb { background: #978460; border-radius: 4px; }
+.unit-recipe-list::-webkit-scrollbar-thumb:hover { background: #c9ad78; }
+
+.test-menu-label { margin: 0; color: #d9c79d; font-weight: 700; }
+.test-grade-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.test-grade-grid button { padding: 8px 4px; font-size: 12px; }
+.test-menu-status { min-height: 1.4em; margin: 0; color: #cfe8d6; }
+
+/* Four compact recipes remain visible while additional recipes scroll. */
+.unit-recipes-heading { justify-content: flex-end; }
+.unit-recipe-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 64px; gap: 4px; max-height: 132px; overflow-y: auto; }
+.unit-recipe-card { display: flex; flex-direction: column; align-items: stretch; gap: 3px; min-width: 0; padding: 4px 5px; border: 1px solid #a6946c50; border-radius: 3px; }
+.unit-recipe-card-head { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.unit-recipe-card .recipe-result-portrait { width: 24px; height: 24px; flex: none; }
+.unit-recipe-result { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.unit-recipe-card .unit-combine { flex: none; padding: 3px 5px; font-size: 11px; }
+.unit-recipe-ingredients { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.unit-recipe-ingredients::-webkit-scrollbar { display: none; }
+.compact-ingredient { display: inline-flex; flex: none; align-items: center; gap: 2px; font-size: 11px; white-space: nowrap; }
+.compact-ingredient .ingredient-portrait { width: 18px; height: 18px; }
+.unit-recipes-empty { grid-column: 1 / -1; }
+
+/* Give the recipe grid the panel height; put its tools just above the frame. */
+.selected:has(.unit-panel-left) { width: min(900px, 1536px); max-width: min(900px, 1536px); grid-template-columns: minmax(200px, .75fr) minmax(350px, 1.25fr); }
+.unit-panel-recipes { position: relative; }
+.unit-recipes-heading { position: absolute; top: -46px; right: -4px; z-index: 2; margin: 0; }
+.unit-recipe-list { grid-auto-rows: 88px; max-height: 180px; gap: 4px; }
+.unit-recipe-card { gap: 4px; padding: 4px 6px; }
+.unit-recipe-card .recipe-result-portrait { width: 25px; height: 25px; }
+.unit-recipe-ingredients { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 24px; gap: 2px 3px; overflow: visible; }
+.compact-ingredient { min-width: 0; gap: 3px; font-size: 12px; font-weight: 700; }
+.compact-ingredient .ingredient-portrait { width: 23px; height: 23px; flex: none; }
+.compact-ingredient .is-owned { color: #c5f2ce; }
+.compact-ingredient .is-missing { color: #ffb4ab; }
+
+.unit-panel-recipes { position: static; }
+.unit-recipes-heading { top: -40px; right: 4px; }
+.unit-recipe-list { grid-auto-rows: 90px; max-height: 184px; }
+
+/* Each recipe is one keyboard-accessible button; only ready recipes light up. */
+.selected button.unit-recipe-card:not(.portrait):not(.skill-icon) {
+  width: 100%; height: 100%; text-align: left; color: #edf5ec;
+  background: #172428; border: 1px solid #a6946c50; border-radius: 3px;
+  cursor: pointer; opacity: 1;
+}
+.selected button.unit-recipe-card.is-ready:not(.portrait):not(.skill-icon) {
+  background: #315a49; border-color: #9fd7af; box-shadow: inset 0 0 12px #8acb8040;
+}
+.selected button.unit-recipe-card.is-ready:not(.portrait):not(.skill-icon):hover {
+  background: #3e715b; border-color: #d1f2ce;
+}
+.selected button.unit-recipe-card:disabled:not(.portrait):not(.skill-icon) {
+  background: #172428; border-color: #a6946c50; opacity: 1; cursor: default;
+}
+.selected button.unit-recipe-card:focus-visible { outline: 2px solid #f0d58f; outline-offset: 1px; }
+/* Result portrait on the left; materials flow down two per row. */
+.selected button.unit-recipe-card:not(.portrait):not(.skill-icon) {
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+}
+.unit-recipe-card-head { display: flex; min-width: 0; flex-direction: column; justify-content: center; align-items: center; gap: 3px; }
+.unit-recipe-card .recipe-result-portrait { width: 40px; height: 40px; }
+.unit-recipe-result { flex: none; width: 100%; text-align: center; font-size: 11px; }
+.unit-recipe-ingredients { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 23px; align-content: center; gap: 1px 5px; overflow: visible; }
+.compact-ingredient { min-width: 0; gap: 3px; font-size: 12px; }
+.compact-ingredient .ingredient-portrait { width: 21px; height: 21px; }
+/* Compact unit information leaves more space for recipe artwork. */
+.selected:has(.unit-panel-left) { grid-template-columns: minmax(185px, 240px) minmax(0, 1fr); }
+.unit-panel-left .unit-header { align-items: flex-start; gap: 5px; }
+.unit-panel-left .unit-sale { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 3px; margin: 2px 0 0; }
+.unit-panel-left .unit-sale button { white-space: nowrap; }
+.unit-panel-left .unit-info { flex-direction: column; align-items: stretch; gap: 7px; }
+.unit-panel-left .unit-stats { max-width: 160px; }
+.unit-panel-left .unit-skills { display: flex; align-items: flex-start; gap: 8px; }
+.unit-panel-left .skill-list { margin: 0; flex-wrap: wrap; }
+.unit-recipe-list { grid-auto-rows: 104px; max-height: 212px; }
+.unit-recipe-ingredients { grid-auto-rows: 29px; gap: 1px 5px; }
+.compact-ingredient { font-size: 13px; gap: 4px; }
+.compact-ingredient .ingredient-portrait { width: 28px; height: 28px; }
+
+.unit-panel-left .unit-heading-main, .unit-panel-left .unit-identity { min-width: 0; }
+.unit-panel-left .unit-identity strong { overflow-wrap: anywhere; }
+/* Keep unit actions outside the panel and let the divider span the content. */
+.unit-panel-left .unit-sale {
+  position: absolute;
+  top: -40px;
+  left: 4px;
+  z-index: 2;
+  margin: 0;
+  justify-content: flex-start;
+}
+
+  .selected:has(.unit-panel-left) {
+    grid-template-columns: 190px minmax(0, 1fr);
+    align-items: stretch;
+  }
+  .unit-panel-recipes { align-self: stretch; }
+
+/* 좁은 유닛 정보 열과 여러 줄로 흐르는 스킬 아이콘. */
+
+  .selected:has(.unit-panel-left) { grid-template-columns: 140px minmax(0, 1fr); }
+
+.unit-panel-left .unit-stats { min-width: 0; width: 100%; }
+.unit-panel-left .unit-stats > div { gap: 4px; }
+.unit-panel-left .unit-skills { min-width: 0; flex-direction: column; align-items: flex-start; gap: 4px; }
+.unit-panel-left .skill-list { display: grid; grid-template-columns: repeat(2, 56px); gap: 4px; }
+/* 판매·보관 버튼은 패널의 바깥쪽 왼쪽 위에 고정한다. */
+.selected .selection-actions {
+  position: absolute;
+  left: 4px;
+  bottom: calc(100% + 6px);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.selected .selection-actions button { white-space: nowrap; font-size: 12px; padding: 5px 9px; }
+/* Selection actions share one outer toolbar and one sizing system. */
+.selected .selection-toolbar {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: calc(100% + 5px);
+  z-index: 3;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.selected .selection-toolbar-group { display: flex; align-items: center; gap: 5px; min-width: 0; }
+.selected .selection-toolbar button:not(.portrait):not(.skill-icon) {
+  box-sizing: border-box;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 11px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #ae9c73;
+  border-radius: 4px;
+  background: linear-gradient(#273c3cf0, #172829f5), url("assets/ui/materials/panel-surface.png") center / cover;
+  box-shadow: inset 0 1px #e9d8ae25, 0 2px 5px #0009;
+  color: #f6ead0;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+.selected .selection-toolbar button:not(.portrait):not(.skill-icon):hover { background: #3a5a4f; border-color: #d9c999; }
+.selected .selection-toolbar button:focus-visible { outline: 2px solid #f0d58f; outline-offset: 2px; }
+.selected .selection-toolbar .selection-toolbar-close:not(.portrait):not(.skill-icon) { width: 34px; min-width: 34px; padding: 0; font-size: 20px; }
+
+/* Temporary portrait cards for combinations made from the current selection. */
+.selected:has(.unit-panel-left):not(:has(.fusion-panel)) { display: block; width: min(360px, 1504px); max-width: min(360px, 1504px); }
+.selected:has(.fusion-panel) { display: block; width: min(900px, 1536px); max-width: min(900px, 1536px); padding: 8px 12px; }
+.fusion-panel { min-width: 0; }
+.fusion-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.fusion-heading .selection-close { width: 30px; height: 30px; font-size: 21px; padding: 0; }
+.fusion-carousel { position: relative; }
+/* The hover frame on cards sticks out up to 4px; padding with a matching negative margin keeps it inside the scroll box,
+   so four cards fit exactly (no arrow, no wheel scroll) while the frame stays visible. */
+.fusion-viewport { display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scroll-padding-inline: 4px; scrollbar-width: none; padding: 4px; margin: -4px; }
+.fusion-viewport::-webkit-scrollbar { display: none; }
+.selected button.fusion-card:not(.portrait):not(.skill-icon) { flex: 0 0 126px; width: 126px; aspect-ratio: 210 / 297; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 6px; border: 1px solid #a99877; border-radius: 4px; background: #26363a; color: #edf5ec; text-align: center; scroll-snap-align: start; }
+.selected button.fusion-card:not(.portrait):not(.skill-icon):hover { background: #365447; border-color: #c3e1b9; }
+.selected button.fusion-card:focus-visible { outline: 2px solid #f0d58f; outline-offset: -3px; }
+.selected button.fusion-card[data-illustrated="true"]:not(.portrait):not(.skill-icon),
+.selected button.fusion-card[data-illustrated="true"]:not(.portrait):not(.skill-icon):hover {
+  justify-content: flex-end;
+  background: #080605 var(--fusion-card-image) center / cover no-repeat;
+  text-shadow: 0 1px 3px #000, 0 1px 6px #000;
+}
+.fusion-card[data-illustrated="true"] .fusion-portrait { display: none; }
+.fusion-card[data-illustrated="true"] .fusion-materials { flex: 0 1 auto; }
+.fusion-portrait { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; flex: none; border-radius: 50%; }
+.fusion-card strong { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.fusion-card small { color: #bdcbbf; font-size: 11px; }
+.fusion-materials { display: flex; flex-direction: column; gap: 2px; width: 100%; overflow-y: auto; color: #d7dfd4; font-size: 11px; line-height: 1.25; }
+.fusion-materials span { overflow-wrap: anywhere; }
+.selected button.fusion-arrow:not(.portrait):not(.skill-icon) { position: absolute; z-index: 2; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; padding: 0; border-radius: 50%; border: 1px solid #c7b083; background: #17272beF; color: #fff0c7; font-size: 24px; line-height: 1; }
+.selected button.fusion-arrow.hidden { display: none; }
+#fusionPrev { left: 2px; }
+#fusionNext { right: 2px; }
+.fusion-empty { margin: 12px 0; color: #c9d3c8; }
+/* The selection close control sits above the frame, leaving the full panel for cards. */
+.selected .fusion-toolbar { justify-content: flex-end; }
+/* A hidden selection panel must stay hidden regardless of its previous contents. */
+#selection.hidden { display: none; }
+/* Recipe ingredients occupy a reserved two-column, three-row area. */
+.selected button.fusion-card:not(.portrait):not(.skill-icon) { flex-basis: 156px; width: 156px; }
+.fusion-materials, .fusion-card[data-illustrated="true"] .fusion-materials {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(3, 26px); grid-auto-rows: 26px;
+  gap: 2px 3px; flex: 0 0 82px; min-height: 82px; max-height: 82px;
+  margin-top: auto; width: 100%; overflow-y: auto; text-align: left;
+}
+.fusion-ingredient { display: flex; align-items: center; min-width: 0; gap: 2px; }
+.fusion-ingredient-icon { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; flex: none; border-radius: 50%; }
+.fusion-ingredient-name { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; min-width: 0; overflow: hidden; overflow-wrap: anywhere; font-size: 10px; line-height: 1.08; }
+.fusion-ingredient-count { flex: none; color: #f1dfae; font-size: 10px; }
+
+/* Recipe-book portraits act as navigation without changing their artwork. */
+.recipe-book button.book-unit-link {
+  padding: 0;
+  flex: none;
+  border: 1px solid #aebfa988;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.recipe-book button.book-unit-link:hover { border-color: #e7d89c; box-shadow: 0 0 0 2px #e7d89c66; }
+.recipe-book button.book-unit-link:focus-visible { outline: 2px solid #f0d58f; outline-offset: 2px; }
+.book-filter-summary { display: flex; align-items: center; gap: 8px; }
+.book-filter-summary button { padding: 3px 8px; font-size: 12px; }
+
+/* Reserve the goal tracker scrollbar space before the list needs to scroll. */
+.goal-tracker {
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #9b8a67 #182725;
+  padding-right: 10px;
+}
+.goal-tracker::-webkit-scrollbar { width: 7px; }
+.goal-tracker::-webkit-scrollbar-track { background: #182725; border-radius: 4px; }
+.goal-tracker::-webkit-scrollbar-thumb { background: #9b8a67; border-radius: 4px; border: 1px solid #182725; }
+.goal-tracker::-webkit-scrollbar-thumb:hover { background: #c3ae7e; }
+.goal-tracker .goal-row { gap: 4px; }
+.goal-tracker .goal-count { min-width: 34px; text-align: right; }
+/* Generated fusion-control imagery. */
+.selected button.fusion-card:not(.portrait):not(.skill-icon) { position: relative; }
+.selected button.fusion-card:not(.portrait):not(.skill-icon)::after {
+  content: ""; position: absolute; inset: -2px; z-index: 1; pointer-events: none;
+  border: 2px solid #e2cd94; border-radius: 5px; box-shadow: 0 0 9px #d5a75388;
+  opacity: 0; transition: opacity .12s ease;
+}
+.selected button.fusion-card:not(.portrait):not(.skill-icon):hover::after,
+.selected button.fusion-card:not(.portrait):not(.skill-icon):focus-visible::after { opacity: 1; }
+.selected button.fusion-arrow:not(.portrait):not(.skill-icon) {
+  width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%;
+  background: transparent url("assets/ui/fusion-controls/arrow-right.png") center / auto 170% no-repeat;
+  font-size: 0; box-shadow: none;
+}
+.selected button.fusion-arrow:not(.portrait):not(.skill-icon):hover { filter: brightness(1.18); }
+.selected button#fusionPrev { transform: translateY(-50%) scaleX(-1); }
+.selected button.fusion-arrow:focus-visible { outline: 2px solid #f4dc9e; outline-offset: 1px; }
+.toast.is-fusion-warning {
+  width: min(500px, calc(1600px - 24px)); min-height: 50px;
+  display: flex; align-items: center; justify-content: center;
+  box-sizing: border-box; padding: 10px 32px 10px 66px;
+  background: transparent url("assets/ui/fusion-controls/warning-banner.png") center / 100% 190% no-repeat;
+  border: 0; border-radius: 0; color: #fff2d6; font-weight: 700;
+  white-space: normal; text-align: center; text-shadow: 0 1px 3px #000, 0 0 6px #000;
+}
+.toast.is-fusion-warning.hidden { display: none; }
+@media (prefers-reduced-motion: reduce) { .selected button.fusion-card:not(.portrait):not(.skill-icon)::after { transition: none; } }
+
+/* Shared skill icon frame; the generated art is independent from the frame. */
+.selected .skill-icon { width: 56px; height: 56px; padding: 3px; display: inline-flex; align-items: center; justify-content: center; background: #182b2c; border: 1px solid #7aa69a; }
+.selected .skill-icon img { image-rendering: auto; display: block; width: 100%; height: 100%; object-fit: contain; }
+.selected .skill-icon img[hidden], .selected .skill-icon-fallback[hidden] { display: none; }
+.selected .skill-icon:focus-visible { outline: 2px solid #f0d58f; outline-offset: 2px; }
+
+/* Generated ancient-ruin plaque; text is kept separate and accessible. */
+.round-banner {
+  z-index: 8; top: 96px; left: 50%; transform: translateX(-50%);
+  width: min(430px, 1376px); height: 76px; padding: 12px 48px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: #f9edcd; text-align: center; pointer-events: none;
+  background: url('assets/ui/stage-intro/round-banner.webp') center / 100% 300% no-repeat;
+  text-shadow: 0 2px 3px #000, 0 0 8px #000;
+}
+.round-banner.hidden { display: none; }
+.round-banner strong { font: 700 18px "Galmuri HUD", "Malgun Gothic", sans-serif; line-height: 1.25; }
+.round-banner span { font-size: 12px; color: #e0d3ac; line-height: 1.3; }
+.round-banner.is-visible { animation: round-banner-show 2.5s ease both; }
+@keyframes round-banner-show {
+  0% { opacity: 0; transform: translate(-50%, -8px); }
+  12%, 78% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .round-banner.is-visible { animation: round-banner-reduced 2.5s linear both; }
+  @keyframes round-banner-reduced { 0%, 90% { opacity: 1; } 100% { opacity: 0; } }
+}
+
+/* Hide battle HUD while the entrance opens; restore it only after the reveal. */
+body.arena-intro .overlay:not(.modal) { opacity: 0; visibility: hidden; pointer-events: none; }
+.theme-roulette{text-align:center}
+.theme-reel-window{position:relative;overflow:hidden;width:180px;margin:18px auto;border:1px solid #d1ab62;border-radius:8px;background:#172626}
+.theme-reel{display:flex;width:max-content;animation:theme-spin 2s cubic-bezier(.15,.6,.18,1) forwards}
+.theme-reel-item{width:180px;flex:none;padding:15px 8px;box-sizing:border-box;font-weight:700;color:#f4da9a}
+.theme-result{animation:theme-reveal .2s 2s both}.theme-result strong{color:#ffe1a0;font-size:1.25rem}
+@keyframes theme-spin{from{transform:translateX(0)}to{transform:translateX(-2160px)}}
+@keyframes theme-reveal{from{opacity:0;visibility:hidden}to{opacity:1;visibility:visible}}
+@media(prefers-reduced-motion:reduce){.theme-reel,.theme-result{animation-duration:.01ms;animation-delay:0s}}
+
+/* Unified battle modal: one header, body and footer rhythm for every dialog. */
+.ui-modal { display: flex; flex-direction: column; gap: 12px; line-height: 1.6; }
+.ui-modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding-bottom: 10px; border-bottom: 1px solid #b69a6440; }
+/* Long scrolling dialogs keep their title and close button in view. */
+.recipe-book .ui-modal-head, .help-modal .ui-modal-head { position: sticky; top: -12px; z-index: 3; margin: -12px -16px 0; padding: 12px 16px 10px; background: #17262b; }
+.ui-modal-titles { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ui-modal-eyebrow { color: #cdb67f; font-size: 10px; font-weight: 700; letter-spacing: .16em; line-height: 1.2; }
+.ui-modal .ui-modal-head h2 { margin: 0; color: #f6efd9; font-size: 20px; line-height: 1.25; letter-spacing: -.02em; }
+.modal button.ui-modal-close { flex: none; width: 32px; height: 32px; padding: 0; border-radius: 6px; background: #1f3337; border-color: #a18c6799; color: #efe3c4; font-size: 20px; line-height: 1; }
+.modal button.ui-modal-close:hover:not(:disabled) { background: #2f4a48; border-color: #ead19a; }
+.ui-modal-body { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.ui-modal-body p { margin: 0; }
+.ui-modal-lead { color: var(--hud-muted); font-size: 13px; }
+.ui-modal-note { color: var(--hud-muted); font-size: 12px; }
+.ui-modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding-top: 12px; border-top: 1px solid #b69a6433; }
+.ui-modal-foot button { min-width: 96px; }
+.modal button.ui-btn-primary { background: #2f6a52; border-color: #a6e5bd; color: #f4ffe9; font-weight: 700; }
+.modal button.ui-btn-primary:hover:not(:disabled) { background: #3a7d61; }
+.modal button.ui-btn-danger { background: #4a2a28; border-color: #c98a80; color: #ffd9d1; }
+.modal button.ui-btn-danger:hover:not(:disabled) { background: #5d3330; }
+.modal button.ui-btn-ghost { background: transparent; border-color: #89a6a466; }
+.modal button.ui-btn-ghost:hover:not(:disabled) { background: #29453f; }
+
+/* Choice cards: boss rewards and emergency support. */
+.modal .reward-list { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.modal .reward-list > button { display: flex; flex-direction: column; align-items: stretch; gap: 3px; padding: 10px 12px; border-radius: 6px; text-align: left; line-height: 1.45; }
+.choice-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.choice-top strong { color: #f6efd9; font-size: 14px; }
+.choice-meta { flex: none; color: var(--hud-gold); font-size: 12px; font-variant-numeric: tabular-nums; }
+/* Relic rewards (placeholder look; final art by Codex). */
+.modal .reward-list > button.reward-relic { border-color: #c79bff; box-shadow: inset 3px 0 0 #c79bff; }
+.reward-relic .choice-meta { color: #d6b8ff; }
+.reward-owned { margin: 0 0 8px; color: #d6b8ff; font-size: 12px; }
+.choice-desc { color: var(--hud-muted); font-size: 12px; }
+
+/* Grade upgrades: aligned rows with level pips. */
+.upgrade-list { display: flex; flex-direction: column; }
+.upgrade-row { display: grid; grid-template-columns: 64px 84px minmax(0, 1fr) 72px; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #9fc4bd22; }
+.upgrade-row:last-child { border-bottom: 0; }
+.upgrade-grade { font-size: 14px; }
+.upgrade-pips { display: flex; gap: 6px; padding-left: 2px; }
+.upgrade-pips i { width: 9px; height: 9px; border: 1px solid #b69a6499; transform: rotate(45deg); }
+.upgrade-pips i.on { background: var(--hud-gold); border-color: var(--hud-gold); }
+.upgrade-bonus { color: var(--hud-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.modal .upgrade-row button { padding: 6px 0; font-size: 12px; }
+
+/* Pause menu and its sub-pages. */
+.ui-modal.battle-menu { gap: 12px; }
+.battle-menu .ui-modal-body > button { width: 100%; padding: 12px 14px; text-align: left; }
+.battle-menu .ui-modal-body > .menu-primary { background: #315c4f; border-color: #9bcdb3; }
+.battle-menu .ui-modal-body > .menu-exit { color: #ffccc2; border-color: #ad7973; }
+.battle-menu .setting-row { padding: 4px 0; }
+
+/* Theme roulette, help and results. */
+.theme-roulette .ui-modal-head { justify-content: center; text-align: center; }
+.theme-roulette .ui-modal-titles { align-items: center; }
+.theme-roulette .ui-modal-body { align-items: center; text-align: center; }
+.theme-roulette .theme-reel-window { margin: 6px auto; }
+.theme-roulette .ui-modal-foot { justify-content: center; animation: theme-reveal .2s 2s both; }
+.help-modal .ui-modal-body p strong { color: #f0d58f; }
+.result-stats { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 1px solid #9fc4bd2e; border-radius: 6px; background: #0f1b1f88; color: #d9e3dc; font-size: 12px; }
+.result-modal.is-victory .ui-modal-head h2 { color: #ffe1a0; }
+.result-modal.is-defeat .ui-modal-head h2 { color: #ff9d91; }
+@media (prefers-reduced-motion: reduce) { .theme-roulette .ui-modal-foot { animation-duration: .01ms; animation-delay: 0s; } }
+
+/* HUD hierarchy: round and threat read first, gold second, theme as context. */
+.top { padding: 6px 12px; }
+.hud-stat { justify-content: center; min-width: 0; padding: 0 14px; }
+.hud-stat small { font-size: 10px; letter-spacing: .04em; }
+.hud-stat strong { font-size: 18px; font-weight: 700; line-height: 1.15; }
+.hud-wave { min-width: 168px; }
+.hud-wave strong { font-size: 18px; }
+.hud-sub { min-height: 1.2em; color: var(--hud-muted); font-size: 11px; line-height: 1.2; }
+.hud-gold { min-width: 78px; }
+.hud-gold strong::before { content: "◆"; margin-right: 5px; color: #d9a94f; font-size: 11px; vertical-align: 2px; }
+.hud-enemies { min-width: 128px; }
+.hud-enemies strong { font-size: 20px; }
+.hud-limit { color: #8fa59c; }
+.hud-gauge { display: block; width: 100%; height: 4px; margin-top: 3px; overflow: hidden; border-radius: 2px; background: #ffffff1a; }
+.hud-gauge i { display: block; width: 0; height: 100%; background: #8fd1a8; transition: width .25s, background-color .25s; }
+.hud-enemies[data-level="warn"] strong { color: #ffc46b; }
+.hud-enemies[data-level="warn"] .hud-gauge i { background: #ffb347; }
+.hud-enemies[data-level="danger"] strong { color: #ff7a72; }
+.hud-enemies[data-level="danger"] .hud-gauge i { background: #ff5f57; animation: hud-threat .9s ease-in-out infinite alternate; }
+@keyframes hud-threat { to { opacity: .45; } }
+.hud-theme strong { color: #d9cfae; font-size: 13px; font-weight: 400; }
+@media (prefers-reduced-motion: reduce) { .hud-enemies[data-level="danger"] .hud-gauge i { animation: none; } .hud-gauge i { transition: none; } }
+/* Elements that hang below the taller HUD clear its bottom edge (96px). */
+.toast { top: 104px; }
+.boss-preview { top: 104px; }
+body:has(#bossPreview:not(.hidden)) .toast { top: 148px; }
+body:has(#roundBanner.is-visible) .toast { top: 180px; }
+
+/* Selected unit: show the artwork at a readable size. */
+.unit-panel-left .unit-portrait { width: 64px; height: 64px; border-color: #c9b27c; background-color: #172326 !important; }
+.unit-panel-left .unit-heading-main { gap: 10px; }
+
+/* Fusion cards: the panel hugs its cards and stays centred instead of a fixed 900px strip. */
+.selected:has(.fusion-panel) { width: max-content; min-width: 240px; }
+.fusion-viewport { justify-content: flex-start; }
+
+/* Battle UI floor: no secondary text below 11–12px. */
+.hud-stat small, .ui-modal-eyebrow { font-size: 11px; }
+.actions .battle-action small, .hud-sub, .unit-grade, .unit-recipes-label, .unit-recipe-info small,
+.unit-recipe-card .unit-combine, .compact-ingredient, .unit-recipe-result, .fusion-card small,
+.selected .skill-icon, .role-tag, .target-modes button { font-size: 12px; }
+.fusion-materials { font-size: 12px; }
+.fusion-ingredient-name, .fusion-ingredient-count { font-size: 11px; line-height: 1.15; }
+
+/* 결과 화면 "이번 판에서" (임시 디자인: Codex 디자인 후 교체) */
+.run-record{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:2px solid #b69a6466;background:#0f1b1f}
+.run-record h3{margin:0;color:#f0cb82;font-size:14px}
+.run-record-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:12px}
+.run-record-new{color:#c5f2ce}
+.run-record-progress li{display:grid;grid-template-columns:minmax(0,1fr) 80px auto;align-items:center;gap:8px}
+.run-record-progress b{font-weight:400;color:#d9cfae;font-variant-numeric:tabular-nums}
+.run-record small{color:var(--hud-muted);font-size:11px}
+.run-record-bar{display:block;height:6px;background:#070c0f;box-shadow:0 0 0 1px #ffffff1a}
+.run-record-bar i{display:block;height:100%;background:#8fd1a8}
+
+/* Grade upgrade badge on the basic attack icon and the upgraded/buffed part of attack (placeholder look). */
+.selected .skill-icon { position: relative; }
+.skill-level { position: absolute; top: -6px; right: -6px; z-index: 1; min-width: 16px; padding: 0 3px; border: 1px solid #2a1d08; border-radius: 3px; background: #f0c75a; color: #2a1d08; font-size: 10px; font-weight: 700; line-height: 14px; text-align: center; pointer-events: none; }
+.stat-bonus { margin-left: 3px; color: #7fe08a; }
+
+/* Beginner hints (placeholder look). Bottom-right, clear of the goal tracker and the action bar; never blocks the battle. */
+.tutorial-hint { bottom: 24px; right: 16px; width: 300px; padding: 10px 12px; font-size: 13px; line-height: 1.5; border-color: #8fc1e8; pointer-events: auto; z-index: 30; }
+.tutorial-head { display: flex; flex-direction: column; gap: 1px; margin-bottom: 4px; }
+.tutorial-eyebrow { color: #8fc1e8; font-size: 11px; letter-spacing: .08em; }
+.tutorial-head strong { color: #f6efd9; font-size: 14px; }
+.tutorial-hint p { margin: 0 0 8px; color: #dfe8e3; }
+.tutorial-hint b { color: #ffe0a0; font-weight: 600; }
+.tutorial-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.tutorial-actions button { font: inherit; font-size: 12px; padding: 4px 10px; border-radius: 6px; cursor: pointer; color: #eef6ed; background: #17262b; border: 1px solid #739b8c; }
+.tutorial-actions .tutorial-ok { background: #2b4f63; border-color: #8fc1e8; }
+.setting-reset { margin-top: 6px; }
+
+/* ---- Codex: unit grid (left) + details (right). Placeholder look; final art by Codex. ---- */
+.modal .panel:has(.codex) { width: min(1120px,1536px); height: 720px; max-height: 720px; overflow: hidden; display: flex; }
+.ui-modal.codex { flex: 1; min-height: 0; gap: 8px; }
+.codex .ui-modal-head { position: static; margin: 0; padding: 0; }
+.codex-toolbar { display: flex; flex-direction: column; gap: 6px; }
+.codex-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.codex-search { width: 150px; font: inherit; font-size: 13px; color: #eef6ed; background: #0f1d22; border: 1px solid #739b8c; border-radius: 6px; padding: 3px 8px; }
+.codex-search:focus { outline: none; border-color: #f0d58f; }
+.modal button.codex-chip { padding: 2px 9px; font-size: 12px; border-radius: 12px; line-height: 1.5; }
+.modal button.codex-chip[aria-pressed="true"] { background: #4b6b3d; border-color: #c9e39a; color: #f3ffe0; }
+.modal button.codex-chip.is-theme { border-color: #c79bff; }
+.codex-divider { width: 1px; height: 16px; margin: 0 4px; background: #9fc4bd44; }
+.codex-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0,1fr) 400px; gap: 12px; }
+.codex-list { overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill,minmax(88px,1fr)); align-content: start; gap: 6px; padding: 2px 4px 2px 0; }
+.modal button.codex-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px 5px; min-height: 92px; background: #13232a; border: 1px solid #3f5a55; border-radius: 6px; line-height: 1.2; }
+.modal button.codex-card:hover { background: #1c3138; border-color: #9fc4bd; }
+.modal button.codex-card.is-selected { border-color: #f0d58f; box-shadow: inset 0 0 0 1px #f0d58f; background: #22342f; }
+.modal button.codex-card.is-ready { border-color: #8bd48f; }
+.codex-portrait { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; image-rendering: pixelated; }
+.codex-name { font-size: 12px; font-weight: 600; text-align: center; overflow-wrap: anywhere; }
+.codex-owned { position: absolute; top: 3px; right: 5px; font-size: 11px; color: #f1dfae; }
+.codex-badge { font-size: 10px; padding: 0 5px; border-radius: 3px; }
+.codex-badge.is-ready { color: #10200f; background: #8bd48f; }
+.codex-badge.is-near { color: #2a1d08; background: #f0c75a; }
+.codex-empty, .codex-intro p { color: #b7c9c1; }
+.codex-detail { overflow-y: auto; padding: 8px 12px; background: #0f1d22; border: 1px solid #3f5a55; border-radius: 8px; line-height: 1.5; }
+.codex-intro strong { color: #f6efd9; font-size: 16px; }
+.codex-summary b { color: #8bd48f; }
+.codex-head { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; }
+.codex-big { flex: none; width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; background-color: #202629; border: 1px solid #5d7a72; border-radius: 6px; image-rendering: pixelated; }
+.codex-head strong { display: block; font-size: 18px; }
+.codex-sub { display: block; color: #b7c9c1; font-size: 12px; margin-bottom: 3px; }
+.codex-stats { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; color: #c9d6cf; }
+.codex-stats b { color: #f6efd9; }
+.codex-skills { display: flex; gap: 6px; margin: 6px 0 2px; }
+.codex-effect { margin: 2px 0 6px; font-size: 12px; color: #c9d6cf; }
+.codex-section { margin-top: 8px; padding-top: 8px; border-top: 1px solid #9fc4bd33; }
+.codex-section h3 { margin: 0 0 6px; font-size: 13px; color: #f1dfae; }
+.codex-section h3 small { color: #8fa79f; font-weight: normal; }
+.codex-recipe { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 5px 6px; margin-bottom: 4px; border: 1px solid #2f4440; border-radius: 6px; }
+.codex-recipe.is-ready { border-color: #8bd48f; }
+.codex-recipe-tag { font-size: 10px; padding: 0 5px; border-radius: 3px; color: #10171a; background: #9fc4bd; }
+.codex-part { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; }
+.codex-part .ingredient-portrait { width: 26px; height: 26px; }
+.codex-plus { color: #8fa79f; }
+.modal button.codex-goal { margin-top: 4px; }
+.codex-uses { display: grid; grid-template-columns: 1fr; gap: 3px; }
+.codex-use { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.codex-use .ingredient-portrait { width: 24px; height: 24px; }
+.modal button.codex-use-goal { margin-left: auto; padding: 1px 7px; font-size: 11px; }
+/* A toast must not cover an open window's title: move it to the bottom while a window is open. */
+body:has(#modal:not(.hidden)) .toast { top: auto; bottom: 24px; }
+/* Skill icons outside the selection panel (codex details, spectator unit info) use the same framed size. */
+.codex-skills .skill-icon, .spectate-panel .skill-icon { position: relative; width: 48px; height: 48px; padding: 3px; display: inline-flex; align-items: center; justify-content: center; background: #182b2c; border: 1px solid #7aa69a; }
+.codex-skills .skill-icon img, .spectate-panel .skill-icon img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.codex-skills .skill-icon img[hidden], .codex-skills .skill-icon-fallback[hidden], .spectate-panel .skill-icon img[hidden], .spectate-panel .skill-icon-fallback[hidden] { display: none; }
+/* Tooltips open downward inside the scrolling detail panel so they are not cut off at its top. */
+.codex-detail .skill-tip { bottom: auto; top: calc(100% + 6px); left: 0; transform: none; }
+
+/* ---- Result screen (placeholder look) ---- */
+.modal .panel:has(.result-modal) { width: min(720px,1440px); }
+.result-summary { display: flex; flex-direction: column; gap: 10px; }
+.result-summary h3 { margin: 0 0 4px; font-size: 13px; color: #f1dfae; }
+.result-headline { display: flex; align-items: baseline; gap: 12px; padding: 8px 12px; border: 1px solid #9fc4bd2e; border-radius: 6px; background: #0f1b1f88; }
+.result-headline > span:first-child { color: #b7c9c1; font-size: 13px; }
+.result-headline strong { font-size: 24px; color: #f6efd9; }
+.result-headline strong small { font-size: 14px; color: #8fa79f; font-weight: normal; }
+.result-best { margin-left: auto; font-size: 13px; color: #b7c9c1; }
+.result-best.is-new { color: #ffe1a0; font-weight: 700; }
+.result-units { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.result-units li { display: grid; grid-template-columns: 32px 96px 1fr 130px; align-items: center; gap: 8px; font-size: 13px; }
+.result-portrait { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: #202629; image-rendering: pixelated; }
+.result-unit-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.result-bar { display: flex; height: 8px; background: #17201d; border-radius: 4px; overflow: hidden; }
+.result-bar i { display: block; height: 100%; background: #8bd48f; }
+.result-bar i.is-assist { background: #e0b85a; }
+.result-legend { margin: 0 0 4px; font-size: 12px; color: #c9d6cf; }
+.result-legend i { display: inline-block; width: 10px; height: 8px; margin: 0 4px 0 10px; border-radius: 2px; background: #8bd48f; vertical-align: middle; }
+.result-legend i:first-child { margin-left: 0; }
+.result-legend i.is-assist { background: #e0b85a; }
+.result-num { text-align: right; color: #c9d6cf; font-variant-numeric: tabular-nums; }
+.result-graph-bars { position: relative; display: flex; align-items: flex-end; gap: 1px; height: 70px; padding: 0 2px; border-bottom: 1px solid #5d7a72; background: linear-gradient(#ff6b5e55,#ff6b5e55) 0 0/100% 1px no-repeat; }
+.result-graph-bars i { flex: 1; min-width: 2px; background: #8bed8c; }
+.result-graph-bars i.is-warn { background: #f2c94c; }
+.result-graph-bars i.is-danger { background: #ff6b5e; }
+.result-graph-axis { display: flex; justify-content: space-between; font-size: 11px; color: #8fa79f; }
+.result-chips > div { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+.result-chip { padding: 1px 8px; border-radius: 10px; font-size: 12px; color: #dfe8e3; background: #1c3138; border: 1px solid #3f5a55; }
+.result-chip.is-relic { border-color: #c79bff; color: #e6d3ff; }
+.result-more summary { cursor: pointer; color: #9fd3c0; font-size: 13px; }
+.result-more .result-stats { margin-top: 6px; }
+
+/* ---- Boss reward cards (placeholder look) ---- */
+.modal .panel:has(.reward-cards) { width: min(820px,1440px); }
+.modal .reward-list.reward-cards { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
+.modal .reward-list.reward-cards > button.reward-card { position: relative; align-items: flex-start; gap: 6px; min-height: 190px; padding: 14px 12px 12px; }
+.reward-icon { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 8px; font-size: 18px; font-weight: 700; color: #10200f; background: #9fc4bd; }
+.reward-relic .reward-icon { background: #c79bff; color: #1d1030; }
+.reward-card .choice-top { width: 100%; }
+.reward-fit { margin-top: auto; padding-top: 6px; border-top: 1px solid #9fc4bd2e; width: 100%; font-size: 12px; color: #b7c9c1; }
+.reward-fit b { color: #8bd48f; }
+.modal .reward-list.reward-cards > button.reward-card.is-good { box-shadow: inset 0 0 0 1px #8bd48f; }
+/* Upgrade rows: how many units of the grade you own; grades you don't have are dimmed. */
+.upgrade-row { grid-template-columns: 64px 72px 84px minmax(0,1fr) 72px; }
+.upgrade-owned { font-size: 12px; color: #c9d6cf; }
+.upgrade-row.is-empty { opacity: .5; }
+.upgrade-bonus b { color: #8bd48f; }
+/* Ticket picker: units the goal still needs come first and are marked. */
+.modal button.ticket-option.is-goal { border-color: #f0d58f; box-shadow: inset 3px 0 0 #f0d58f; }
+.ticket-owned { font-size: 11px; font-weight: normal; color: #c9d6cf; }
+.ticket-goal { font-size: 11px; padding: 0 5px; border-radius: 3px; color: #2a1d08; background: #f0d58f; }
+.theme-good { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; }
+/* Support: the reason a choice is unavailable is written in the button. */
+.choice-reason { font-size: 12px; color: #f0b3a5; }
+/* Boss preview: one line; the full text opens on hover. */
+.boss-preview { pointer-events: auto; }
+.boss-preview-more { display: none; margin-top: 4px; }
+.boss-preview:hover .boss-preview-more, .boss-preview:focus-within .boss-preview-more { display: block; }
+.boss-preview-more-hint { margin-left: 6px; color: #8fa79f; font-size: 11px; }
+
+/* Codex: let the grid and detail panes scroll inside the fixed-height window. */
+.codex .ui-modal-body { flex: 1; min-height: 0; }
+.codex-body > * { min-height: 0; }
+/* Whole ingredient chip / "used in" row is clickable, not just the small icon. */
+.modal button.codex-part { padding: 2px 8px 2px 2px; background: #13232a; border: 1px solid #3f5a55; border-radius: 6px; color: inherit; cursor: pointer; }
+.modal button.codex-part:hover { background: #1b3036; border-color: #f0d58f; }
+.codex-use { padding: 2px 4px; border: 1px solid transparent; border-radius: 6px; cursor: pointer; }
+.codex-use:hover, .codex-use:focus-visible { background: #1b3036; border-color: #f0d58f; outline: none; }
+.codex-usesof { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border: 1px solid #b69a64; border-radius: 6px; background: #1f2c22; font-size: 13px; }
+.codex-usesof .ingredient-portrait { width: 28px; height: 28px; }
+
+/* Enemy card: big health bar so a clicked enemy is easy to read at a glance. */
+.enemy-card { min-width: 460px; }
+.enemy-card-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.enemy-card-head strong { font-size: 18px; }
+.enemy-kind { padding: 1px 6px; border: 1px solid #789f90; border-radius: 4px; font-size: 11px; color: #cfe5dc; }
+.enemy-card.is-boss .enemy-kind, .enemy-card.is-miniboss .enemy-kind { border-color: #e58b6e; color: #ffc4ad; }
+.enemy-card.is-elite .enemy-kind { border-color: #c9a75c; color: #f4d98f; }
+.enemy-hp { position: relative; height: 26px; background: #1a1212; border: 2px solid #050808; box-shadow: inset 0 0 0 1px #4b3434; overflow: hidden; }
+.enemy-hp i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(#e6655a 0 45%, #b8392f 45%); transition: width .15s linear; }
+.enemy-hp b { position: absolute; inset: 0 auto auto 0; height: 6px; background: #9fd8ff; opacity: .9; }
+.enemy-hp span { position: relative; display: block; text-align: center; line-height: 22px; font-weight: 700; font-size: 14px; color: #fff; text-shadow: 1px 1px 0 #000, -1px 0 0 #000; }
+.enemy-hp small { opacity: .8; font-size: 11px; }
+.enemy-stats { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 6px; font-size: 13px; }
+.enemy-stats b { font-size: 15px; }
+.enemy-note { margin: 4px 0 0; color: #a9bdb5; font-size: 12px; }
+.enemy-mark { display: inline-block; margin-left: 3px; padding: 0 5px; border-radius: 3px; background: #2f4a44; color: #e6fff6; }
+/* Bottom info panel size (설정 · 정보창 크기). */
+#selection { --sel-scale: 1; }
+#selection:not(.hidden) { transform: translateX(-50%) scale(var(--sel-scale)); transform-origin: 50% 100%; }
+.goal-heading { display: flex; align-items: center; gap: 4px; }
+.goal-heading strong { margin-right: auto; }
+.goal-heading .goal-expand-all { font-size: 11px; padding: 1px 6px; }
+.sel-zoom { position: absolute; left: 6px; top: -26px; display: flex; align-items: center; gap: 2px; padding: 2px 4px; background: var(--hud-bg, #0d1a1a); border: 1px solid var(--hud-edge, #3f5a55); border-radius: 6px 6px 0 0; font-size: 11px; color: #cfe5dc; }
+.sel-zoom button { width: 22px; height: 20px; padding: 0; line-height: 1; font-size: 14px; }
+.sel-zoom span { min-width: 34px; text-align: center; }
+
+/* ---- Boss reward cards (manmul/cards.js): family colour band on top, rarity on the frame. ---- */
+.modal .panel:has(.reward-cards.is-four) { width: min(1040px,1440px); }
+.modal .reward-list.reward-cards.is-four { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.modal .reward-list.reward-cards > button.reward-card { border-color: color-mix(in srgb, var(--fam) 70%, #000); padding-top: 34px; min-height: 220px; transition: transform .12s ease; }
+.modal .reward-list.reward-cards > button.reward-card:hover:not(:disabled) { transform: translateY(-4px); border-color: var(--fam); }
+.reward-card .card-band { position: absolute; left: 0; right: 0; top: 0; display: flex; justify-content: space-between; padding: 4px 10px; background: color-mix(in srgb, var(--fam) 28%, #0b1414); border-bottom: 1px solid color-mix(in srgb, var(--fam) 60%, #000); font-size: 11px; font-weight: 700; color: var(--fam); }
+.reward-card .reward-icon, .reward-relic .reward-icon { background: var(--fam); color: #14100a; }
+.reward-card.rarity-rare .card-band span:last-child { color: #9fd8ff; }
+.reward-card.rarity-legend { background: linear-gradient(160deg, #3a2b12, #182322 55%) !important; box-shadow: 0 0 0 1px #f4d06f, 0 0 18px #f4d06f55 !important; }
+.reward-card.rarity-legend .card-band span:last-child { color: #ffe9a8; text-shadow: 0 0 6px #f4d06f; }
+.card-deck { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; margin: 0 0 8px; }
+.card-set { display: flex; flex-direction: column; gap: 2px; padding: 5px 8px; border: 1px solid color-mix(in srgb, var(--fam) 40%, #000); border-radius: 6px; background: #0f1a1a; font-size: 12px; color: #cfdcd6; }
+.card-set b { color: var(--fam); }
+.card-set small { font-size: 10px; color: #8fa79f; line-height: 1.3; }
+.card-set.is-on { border-color: var(--fam); background: color-mix(in srgb, var(--fam) 16%, #0f1a1a); }
+.card-set.is-on small { color: #e6fff6; }
+.reward-owned { color: #cfdcd6; }
+
+/* ---- Missions (임무) and mid-boss bounty (현상금 수배): left column of the battle HUD. ---- */
+.mission-panel { top: 83px; left: 16px; width: 250px; display: flex; flex-direction: column; gap: 6px; padding: 0; background: none !important; border: 0 !important; box-shadow: none !important; pointer-events: none; }
+body:has(#multiBoard:not(.hidden)) .mission-panel { top: 330px; }
+.mission-card, .bounty-card { padding: 7px 10px 8px; background: var(--hud-bg, #0d1a1a); border: 2px solid #6d5a39; box-shadow: 0 0 0 2px #070b0b, 0 5px 16px #0008; color: #e7dec7; font-size: 12px; }
+.mission-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+.mission-head b { font-size: 13px; color: #f0cb82; }
+.mission-head small { font-size: 11px; color: #a59d86; }
+.mission-card p, .bounty-card p { margin: 4px 0; line-height: 1.4; }
+.mission-bar { position: relative; height: 14px; background: #0a1011; border: 1px solid #3a4540; }
+.mission-bar i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(#8fd6a0 0 50%, #5aa872 50%); }
+.mission-bar span { position: relative; display: block; text-align: center; font-size: 10px; line-height: 12px; color: #fff; text-shadow: 1px 1px 0 #000; }
+.mission-reward { display: block; margin-top: 4px; color: #c9b88f; font-size: 11px; }
+.mission-card.is-done { border-color: #5aa872; }
+.mission-card.is-done p { color: #8fd6a0; text-decoration: line-through; }
+.bounty-card { border-color: #c4553f; background: linear-gradient(#2a1612, #160e0c) !important; }
+.bounty-card .mission-head b { color: #ff9b7a; }
+.bounty-card p b { color: #fff3cf; font-size: 14px; }
+.bounty-tiers { display: grid; grid-template-columns: repeat(3,1fr); gap: 3px; margin-top: 5px; }
+.bounty-tiers span { padding: 1px 0; text-align: center; border: 1px solid #4a3a30; color: #6f625a; font-size: 11px; }
+.bounty-tiers span.is-past { text-decoration: line-through; }
+.bounty-tiers span.is-on { color: #14100a; font-weight: 700; }
+.bounty-card.is-gold .bounty-tiers span.is-on { background: #f4d06f; border-color: #f4d06f; }
+.bounty-card.is-silver .bounty-tiers span.is-on { background: #cfd8dc; border-color: #cfd8dc; }
+.bounty-card.is-bronze .bounty-tiers span.is-on { background: #c88a5a; border-color: #c88a5a; }
+
+/* Mission board (미션): compact card on the left HUD, full checklist in a modal. */
+.mission-panel { pointer-events: none; }
+.mission-panel .mission-card { pointer-events: auto; display: block; width: 100%; text-align: left; cursor: pointer; font: inherit; }
+.mission-panel .mission-card:hover { border-color: #f0cb82; }
+.mission-near { list-style: none; margin: 5px 0 0; padding: 0; display: grid; gap: 4px; }
+.mission-near li { display: grid; grid-template-columns: 1fr 86px; align-items: center; gap: 6px; font-size: 11px; color: #d7cfb9; }
+.mission-near em, .mission-row em { font-style: normal; color: #ff9b7a; }
+.modal .panel:has(.mission-modal) { width: min(1140px,1440px); }
+.mission-group { display: flex; align-items: baseline; gap: 8px; margin: 10px 0 6px; font-size: 14px; color: #f0cb82; }
+.mission-group small { color: #a59d86; font-size: 12px; }
+.mission-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; }
+.mission-row { display: grid; grid-template-columns: 24px 1fr 90px 104px; align-items: center; gap: 10px; padding: 6px 10px; border: 1px solid #2f3d39; background: #0f1718; }
+.mission-row.is-hidden { grid-template-columns: 24px 1fr 104px; }
+.mission-row.is-hidden:not(.is-done) { background: repeating-linear-gradient(135deg, #12191a 0 8px, #0f1617 8px 16px); }
+.mission-row.is-done { grid-template-columns: 24px 1fr 160px; border-color: #3f6b4c; background: #122019; }
+.mission-mark { display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; border: 1px solid #4a4434; color: #f0cb82; font-weight: 700; }
+.mission-row.is-done .mission-mark { background: #5aa872; border-color: #5aa872; color: #0b140e; }
+.mission-row.is-expired { opacity: .5; }
+.mission-text strong { display: block; font-size: 13px; color: #f2e6c6; }
+.mission-text small { font-size: 11px; color: #a9b3ad; }
+.mission-row .mission-reward { text-align: right; font-size: 11px; color: #c9b88f; }
+.mission-row.is-done .mission-reward { color: #8fd6a0; }
+
+/* 현상금 사냥: HUD card while hunting and the summon window. Portraits are placeholders until the art is drawn. */
+.hunt-hud { padding: 7px 10px 8px; background: linear-gradient(#24160f, #140d0a); border: 2px solid var(--hunt); box-shadow: 0 0 0 2px #070b0b, 0 5px 16px #0008; color: #e7dec7; font-size: 11px; }
+.hunt-hud .mission-head b { color: var(--hunt); }
+.hunt-hud .mission-head small { font-size: 13px; color: #fff3cf; }
+.hunt-hud .mission-head small.is-urgent { color: #ff7a6a; }
+.hunt-hp { height: 10px; margin: 5px 0 4px; background: #1a1212; border: 1px solid #050808; }
+.hunt-hp i { display: block; height: 100%; background: linear-gradient(#e6655a 0 50%, #b8392f 50%); }
+.modal .panel:has(.hunt-modal) { width: min(1040px,1440px); }
+.hunt-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; }
+.hunt-card { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 12px 12px; border: 2px solid color-mix(in srgb, var(--hunt) 60%, #000); background: linear-gradient(170deg, color-mix(in srgb, var(--hunt) 16%, #101a1b), #0d1415 60%); }
+.hunt-card.is-locked { opacity: .5; filter: grayscale(.6); }
+.hunt-card.is-ready { box-shadow: 0 0 14px color-mix(in srgb, var(--hunt) 35%, transparent); }
+.hunt-portrait { width: 84px; height: 84px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 3px solid var(--hunt); background: radial-gradient(circle at 40% 35%, #2a3536, #0c1314); color: var(--hunt); font-size: 36px; font-weight: 700; box-shadow: 0 0 0 3px #070b0b; }
+.hunt-tier { color: var(--hunt); font-size: 12px; letter-spacing: 1px; }
+.hunt-tier span { margin-left: 6px; color: #a59d86; letter-spacing: 0; }
+.hunt-name { font-size: 20px; color: #f6e7c0; }
+.hunt-stats { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; width: 100%; margin: 4px 0; font-size: 12px; }
+.hunt-stats dt { color: #8d8167; }
+.hunt-stats dd { margin: 0; text-align: right; color: #e7dec7; }
+.hunt-reward { width: 100%; margin: 0; padding: 6px 8px; border: 1px solid #6d5a3966; background: #0c1314; font-size: 12px; line-height: 1.4; color: #f0cb82; text-align: center; }
+.hunt-reward small { display: block; color: #8d8167; font-size: 10px; }
+.hunt-card button { width: 100%; margin-top: auto; }
+#huntButton.has-ready { border-color: #f0cb82; color: #fff3cf; box-shadow: 0 0 10px #f0cb8266; }
+
+/* ---- 표식 (marks): one colour + one letter per mark everywhere (enemy icons, chips, codex, guide). ---- */
+.mark-chip { display: inline-flex; align-items: center; gap: 3px; margin: 0 3px 0 0; padding: 0 6px 0 2px; border: 1px solid var(--mark); border-radius: 3px; background: color-mix(in srgb, var(--mark) 18%, #0c1314); color: #f2ece0; font-size: 11px; line-height: 16px; white-space: nowrap; vertical-align: middle; }
+.mark-chip i { display: inline-flex; align-items: center; justify-content: center; width: 13px; height: 13px; background: var(--mark); color: #fff; font-style: normal; font-size: 9px; font-weight: 700; }
+.mark-chip.is-any { --mark: #8d8167; padding-left: 6px; }
+.role-tags .mark-chip { margin-left: 2px; }
+.codex-marks { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 6px; }
+.codex-marks-label { margin-right: 4px; font-size: 12px; color: #a59d86; }
+.modal button.codex-chip.mark-filter { display: inline-flex; align-items: center; gap: 4px; border-color: color-mix(in srgb, var(--mark) 60%, #000); }
+.modal button.codex-chip.mark-filter i { width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; background: var(--mark); color: #fff; font-style: normal; font-size: 9px; }
+.modal button.codex-chip.mark-filter[aria-pressed="true"] { background: color-mix(in srgb, var(--mark) 35%, #0c1314); border-color: var(--mark); color: #fff; }
+.modal button.codex-chip.codex-guide { margin-left: 6px; border-style: dashed; }
+.codex-markrole { position: absolute; left: 3px; bottom: 3px; padding: 0 4px; border-radius: 3px; background: var(--mark); color: #fff; font-size: 10px; }
+.codex-markinfo h3 { display: flex; align-items: center; gap: 6px; }
+.mark-lines p { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 3px 0; font-size: 12px; }
+.mark-lines b { min-width: 30px; color: #c9b88f; }
+.mark-lines small { color: #8fa79f; }
+.mark-reaction { padding: 0 6px; border: 1px solid #f0cb82; color: #fff3cf; font-size: 11px; }
+.modal .panel:has(.mark-guide) { width: min(960px,1440px); }
+.mark-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+.mark-card { padding: 8px 10px; border: 1px solid color-mix(in srgb, var(--mark) 55%, #000); border-left: 4px solid var(--mark); background: #0f1718; }
+.mark-card-head { display: flex; align-items: center; gap: 6px; }
+.mark-card-head i { width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; background: var(--mark); color: #fff; font-style: normal; font-size: 11px; font-weight: 700; }
+.mark-card-head strong { font-size: 15px; color: #f6e7c0; }
+.mark-card p { margin: 4px 0; font-size: 12px; color: #c9d6cf; line-height: 1.4; }
+.modal .mark-card-links button { padding: 2px 8px; font-size: 11px; }
+.reaction-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+.reaction-list li { display: grid; grid-template-columns: auto auto auto 1fr; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid #2f3d39; background: #0f1718; font-size: 12px; }
+.reaction-recipe { display: inline-flex; align-items: center; gap: 2px; }
+.reaction-recipe > b { color: #8d8167; margin: 0 2px; }
+.reaction-hit { padding: 0 5px; border: 1px dashed #a59d86; color: #e7dec7; font-size: 11px; }
+.reaction-arrow { color: #8d8167; }
+.reaction-list strong { color: #f0cb82; }
+.reaction-list small { color: #a9b3ad; }
+.mission-row.is-done .mission-reward b { display: block; color: #8fd6a0; font-weight: 400; }
+.mission-row.is-done .mission-reward small { color: #6f8a7a; font-size: 10px; }
+.mission-last { margin: 5px 0 0; padding-top: 4px; border-top: 1px solid #6d5a3955; font-size: 11px; color: #a9b3ad; }
+.mission-last b { color: #8fd6a0; font-weight: 400; }
+/* One 현상금 card for every boss being hunted: a row each (name, health, seconds left). */
+.hunt-hud { border-color: #c4553f; }
+.hunt-row { display: grid; grid-template-columns: 44px 1fr 34px; align-items: center; gap: 6px; margin-top: 4px; }
+.hunt-row b { color: var(--hunt); font-size: 12px; }
+.hunt-row .hunt-hp { margin: 0; height: 8px; }
+.hunt-row small { text-align: right; font-size: 12px; color: #fff3cf; }
+.hunt-row small.is-urgent { color: #ff7a6a; }
+.hunt-reward-line { display: block; margin-top: 4px; color: #c9b88f; font-size: 11px; }
+/* In a multiplayer room the left column also holds the room board and chat: keep the mission card short. */
+body:has(#multiBoard:not(.hidden)) .mission-panel .mission-near { display: none; }
+
+/* ---- Windows in the title-screen look (2026-11-20): banner header with gold rules, warm dark panel. ---- */
+.modal .panel { background: radial-gradient(ellipse at 50% 0%, #1f2e2c 0%, #121b1c 55%, #0b1213 100%); }
+.ui-modal-head { position: relative; justify-content: center; text-align: center; padding: 2px 40px 12px; border-bottom: 0; }
+.ui-modal-head::after { content: ""; position: absolute; left: 12%; right: 12%; bottom: 0; height: 2px; background: linear-gradient(90deg, transparent, #b69a64 20%, #f0cb82 50%, #b69a64 80%, transparent); }
+.ui-modal-titles { align-items: center; }
+.ui-modal-eyebrow { color: #c9a75c; letter-spacing: .3em; }
+.ui-modal .ui-modal-head h2 { font-size: 24px; color: #f6e7c0; text-shadow: 2px 2px 0 #000, 0 0 12px #f0cb8233; }
+.modal button.ui-modal-close { position: absolute; right: 0; top: 0; }
+.codex .ui-modal-head, .recipe-book .ui-modal-head { justify-content: center; }
+.ui-modal-foot { justify-content: center; border-top: 1px solid #b69a6444; }
+.modal .ui-btn-primary { background: linear-gradient(#4a3c1f, #2a2414); border-color: #f0cb82; color: #ffe6a8; }
+.modal .ui-btn-primary:hover:not(:disabled) { background: linear-gradient(#5c4b26, #33291a); }
+/* game menu */
+.modal .panel:has(.battle-menu) { width: min(560px,1440px); }
+.menu-status { display: flex; align-items: baseline; justify-content: center; gap: 14px; padding: 6px 10px; border: 1px solid #6d5a3966; background: #0c1314; font-size: 12px; color: #a59d86; }
+.menu-status b { font-size: 18px; color: #f6e7c0; }
+.menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.modal button.menu-btn { display: grid; grid-template-columns: 18px 1fr; grid-template-rows: auto auto; column-gap: 4px; align-items: center; width: 100%; padding: 10px 14px; text-align: left; background: linear-gradient(90deg, #1d2a29f2, #141e1fc8); border-color: #4f5d55; transition: transform .1s ease; }
+.modal button.menu-btn.is-wide { grid-column: 1 / -1; }
+.menu-btn strong { grid-column: 2; font-size: 17px; color: #f2e6c6; }
+.menu-btn small { grid-column: 2; font-size: 11px; color: #8fa79f; }
+.menu-btn-mark { grid-row: 1 / 3; color: transparent; font-size: 12px; }
+.modal button.menu-btn:hover:not(:disabled), .modal button.menu-btn:focus-visible { transform: translateX(4px); border-color: #f0cb82; background: linear-gradient(90deg, #2c3326f2, #17262bc8); }
+.modal button.menu-btn:hover .menu-btn-mark, .modal button.menu-btn:focus-visible .menu-btn-mark { color: #f0cb82; }
+.modal button.menu-btn.is-primary { border-color: #d9bd7c; background: linear-gradient(90deg, #3b3220f2, #1d2a26c8); }
+.menu-btn.is-primary strong { color: #ffe6a8; font-size: 20px; }
+.modal button.menu-btn.is-exit { border-color: #8a5a52; }
+.menu-btn.is-exit strong { color: #ffb4a6; }
+.menu-btn.is-muted strong { color: #b9b3a0; }
+/* results */
+.modal .panel:has(.result-modal) { width: min(1080px,1440px); }
+.result-hero { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px; border: 1px solid #6d5a3966; background: radial-gradient(ellipse at 50% 0%, #2a2a1e, #0f1617 70%); }
+.result-modal.is-defeat .result-hero { background: radial-gradient(ellipse at 50% 0%, #2e1a18, #0f1617 70%); }
+.result-hero .result-headline { flex-direction: column; align-items: center; gap: 2px; padding: 0; border: 0; background: none; }
+.result-hero .result-headline strong { font-size: 40px; text-shadow: 2px 2px 0 #000; }
+.result-modal.is-victory .result-hero .result-headline strong { color: #ffe1a0; }
+.result-hero .result-reward { margin: 0; padding: 6px 18px; border: 1px solid #f0cb8266; background: #0c1314; color: #f0cb82; text-align: center; }
+.result-columns { display: grid; grid-template-columns: 1.15fr 1fr; gap: 14px; }
+.result-columns > div { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.result-columns .result-units li { grid-template-columns: 30px 84px 1fr 110px; }
+.result-chip.is-hunt { border-color: #c4553f; color: #ffb4a6; }
+.result-xp { color: #e7dec7; font-size: 13px; }
+.result-xp b { color: #ffe6a8; }
+.rift-opened { color: #f3a6d8; }
+
+/* 판 중간 이벤트: option cards share the reward-card look; the "pass" card is plain. */
+.modal .panel:has(.run-event) { width: min(900px,1440px); }
+.modal .reward-list.event-cards > button.reward-card { min-height: 190px; }
+.modal .reward-list.event-cards > button.reward-card.is-pass { --fam: #6f7a74 !important; opacity: .85; }
+.modal .reward-list.event-cards > button.reward-card:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.result-chip.is-event { border-color: #e78fc8; color: #ffd7ef; }
+
+/* 성급 and 조각 상자 */
+.star-chip { display: inline-block; margin-right: 4px; padding: 0 4px; border: 1px solid #c9a75c; color: #ffe08a; font-size: 10px; letter-spacing: -1px; vertical-align: middle; }
+.codex-stars .star-row { color: #ffe08a; letter-spacing: -1px; }
+.box-results { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.box-result { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; padding: 4px 8px; border: 1px solid color-mix(in srgb, var(--box) 55%, #000); border-left: 3px solid var(--box); background: #0f1718; font-size: 12px; }
+.box-result b { color: var(--box); }
+.box-result em { font-style: normal; color: #ffe08a; }
+.box-cosmetic { color: #f3a6d8; }
+
+/* Unit panel (2026-11-20): one horizontal row; ▼ opens the detailed text below it. */
+.selected:has(.unit-compact) { width: min(860px,1504px); max-width: min(860px,1504px); padding: 6px 10px 8px; }
+.unit-compact { display: grid; grid-template-columns: 52px minmax(150px,1.2fr) auto auto 28px; align-items: center; gap: 12px; }
+.unit-compact .unit-portrait { width: 52px; height: 52px; }
+.unit-compact .unit-identity { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.unit-compact .unit-identity strong { font-size: 16px; }
+.unit-compact .unit-grade { font-size: 11px; }
+.unit-compact .role-tags { margin: 2px 0 0; flex-wrap: wrap; }
+.unit-stats-inline { display: flex; gap: 14px; }
+.unit-stats-inline span { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+.unit-stats-inline small { font-size: 10px; color: #8fa79f; }
+.unit-stats-inline b { font-size: 15px; color: #f2ece0; white-space: nowrap; }
+.unit-compact .skill-list { display: flex; gap: 4px; }
+.selected button.unit-more { width: 28px; height: 28px; padding: 0; font-size: 12px; }
+.unit-details { margin-top: 6px; padding-top: 6px; border-top: 1px solid #b69a6444; display: grid; gap: 3px; font-size: 12px; line-height: 1.45; color: #d7cfb9; }
+.unit-details p { margin: 0; }
+.unit-details b { color: #f0cb82; margin-right: 4px; }
+.unit-details .star-row { color: #ffe08a; letter-spacing: -1px; }
+
+/* 경쟁 모드 panel (bottom right) */
+.versus-panel { right: 16px; bottom: 16px; width: 330px; padding: 8px 10px 10px; pointer-events: auto; border-color: #c4553f; }
+.vs-head { display: flex; justify-content: space-between; align-items: baseline; }
+.vs-head b { color: #ff9b7a; font-size: 14px; }
+.vs-head small { color: #e7dec7; font-size: 11px; }
+.vs-gauge { position: relative; display: grid; grid-template-columns: repeat(6,1fr); gap: 2px; height: 14px; margin: 4px 0 6px; padding: 2px; background: #0a0f10; border: 1px solid #3a4540; }
+.vs-gauge > span { position: absolute; left: 2px; top: 2px; bottom: 2px; background: linear-gradient(90deg,#8a2f22,#ff7a5a); opacity: .45; }
+.vs-gauge i { position: relative; border: 1px solid #4a3a30; }
+.vs-gauge i.is-on { background: #ff7a5a; border-color: #ffd0c2; box-shadow: 0 0 6px #ff7a5a88; }
+.vs-final { margin: 0 0 6px; padding: 3px 6px; border: 1px solid #f0cb82; color: #ffe6a8; font-size: 12px; text-align: center; }
+.vs-section { margin-top: 4px; }
+.vs-section > small { display: block; margin-bottom: 2px; color: #8fa79f; font-size: 10px; }
+.vs-targets { display: flex; flex-wrap: wrap; gap: 4px; }
+.vs-acts { display: grid; grid-template-columns: repeat(3,1fr); gap: 4px; }
+.versus-panel button.vs-target, .versus-panel button.vs-act { display: flex; flex-direction: column; align-items: flex-start; padding: 3px 6px; font: inherit; }
+.vs-target b, .vs-act b { font-size: 12px; color: #f2e6c6; }
+.vs-target small, .vs-act small { font-size: 10px; color: #a59d86; }
+.vs-act small { color: #ff9b7a; letter-spacing: 1px; }
+.versus-panel button.vs-target.is-on { border-color: #ff7a5a; background: #3a1d17; }
+.versus-panel button:disabled { opacity: .45; }
+/* In versus mode the gauge panel sits bottom-right: beginner hints move above it. */
+body:has(#versusPanel:not(.hidden)) .tutorial-hint { bottom: 360px; }
+
+/* 협동 모드 */
+.coop-bar { left: 16px; bottom: 16px; display: flex; align-items: center; gap: 4px; padding: 4px 8px; pointer-events: auto; }
+.coop-bar small { color: #8fa79f; font-size: 10px; margin-right: 4px; }
+.coop-bar button { padding: 2px 8px; font-size: 11px; }
+body.coop-mode #huntButton { display: none; }
+.coop-contrib { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.coop-contrib li { display: grid; grid-template-columns: 130px 1fr 120px; align-items: center; gap: 8px; padding: 4px 8px; border-left: 4px solid var(--own); background: #0f1718; font-size: 13px; }
+.coop-contrib b { color: var(--own); }
+.coop-bar i, .coop-contrib .coop-bar i { display: block; height: 100%; background: var(--own); }
+.coop-contrib .coop-bar { position: static; display: block; height: 8px; padding: 0; background: #0a1011; border: 1px solid #3a4540; }
+.coop-contrib small { text-align: right; color: #a9b3ad; }
+
+/* ---- 전투 화면 정리: two tidy side columns (hud-layout.js), fold buttons, folded states ---- */
+.multi-board, .multi-chat, .mission-panel { position: absolute; }
+.hud-fold { position: absolute; top: 4px; right: 4px; z-index: 2; width: 20px; height: 20px; padding: 0; border: 1px solid #4f5d55; background: #101a1b; color: #d7cfb9; font-size: 12px; line-height: 1; cursor: pointer; pointer-events: auto; }
+.hud-fold:hover { border-color: #f0cb82; color: #fff3cf; }
+.multi-board { pointer-events: auto; }
+.multi-board.is-folded .multi-card { display: none; }
+.multi-board.is-folded .multi-board-head::after { content: " · 접힘"; color: #8fa79f; font-size: 10px; }
+.multi-chat.is-folded { height: auto !important; }
+.multi-chat.is-folded .multi-chat-log { display: none; }
+.multi-chat .hud-fold { right: 6px; top: 6px; }
+.goal-tracker { overflow-y: auto; }
+.coop-bar.hidden { display: none; }
+
+/* Unit panel no longer hides the bottom of the field: the button row moves into the panel's single row, and with
+   units selected the empty parts of the panel turn see-through on hover; right-click there moves the units. */
+.selected:has(.unit-compact) { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "main tools" "details details"; column-gap: 10px; align-items: center; }
+.selected:has(.unit-compact) .unit-compact { grid-area: main; }
+.selected:has(.unit-compact) .unit-details { grid-area: details; }
+.selected:has(.unit-compact) .selection-toolbar { grid-area: tools; position: static; display: grid; grid-template-columns: auto auto; gap: 4px; }
+.selected:has(.unit-compact) .selection-toolbar-group { gap: 4px; }
+.selected:has(.unit-compact) .selection-toolbar button:not(.portrait):not(.skill-icon) { padding: 3px 8px; font-size: 11px; min-height: 0; }
+.selected:has(.unit-compact) .selection-toolbar .selection-toolbar-close:not(.portrait):not(.skill-icon) { width: 26px; min-width: 26px; font-size: 16px; }
+.selected.is-peek { opacity: .28; transition: opacity .12s; }
+.selected { transition: opacity .12s; }
+/* Field limits for 재앙 (1) and 천체 (2): shown on the unit panel, in the codex and on fusion cards. */
+.grade-limit { color: #ff9b7a; font-weight: 400; }
+.codex-stats .grade-limit { padding: 0 6px; border: 1px solid #ff9b7a88; }
+.fusion-card[data-limit] { position: relative; }
+.fusion-card[data-limit]::after { content: attr(data-limit); position: absolute; left: 4px; top: 4px; padding: 0 4px; background: #2a1612e6; border: 1px solid #ff9b7a; color: #ffc4ad; font-size: 10px; pointer-events: none; }
