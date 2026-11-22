@@ -4,7 +4,7 @@
 // images that are not complete yet. After the title screen is up, warm() fills every group in the background,
 // in registration order (normal → magic → … → upper effects), a few files at a time, so later fusions rarely wait.
 const ManmulLazyImages=(()=>{
- const groups=[];let started=false,done=0,total=0,listeners=[];
+ const groups=[];let started=false,paused=false,active=0,queue=[],done=0,total=0,listeners=[],parallelism=4;
  function lazyImages(ids,path){
   const known=new Set(ids),images=new Map();
   const group={
@@ -17,15 +17,17 @@ const ManmulLazyImages=(()=>{
   groups.push(group);total+=known.size;return group}
  function notify(){for(const f of listeners)try{f(done,total)}catch(e){}}
  // Background fill: `parallel` downloads at once; requests already started by get() count as they finish.
- function warm(parallel=4){if(started||typeof Image==='undefined')return;started=true;
-  const queue=groups.flatMap(g=>g.ids().map(id=>[g,id]));
-  const next=()=>{let item=queue.shift();if(!item)return;let [g,id]=item,img=g.get(id);
-   if(!img){done++;notify();next();return}
-   if(img.complete){done++;notify();next();return}
-   let finish=()=>{img.removeEventListener?.('load',finish);img.removeEventListener?.('error',finish);done++;notify();next()};
-   img.addEventListener?img.addEventListener('load',finish):(img.onload=finish);img.addEventListener?.('error',finish)};
-  for(let i=0;i<parallel;i++)next()}
+ // pause() stops new downloads (the ones in flight finish) so the stage intro gets the bandwidth; resume() continues.
+ function next(){if(paused)return;let item=queue.shift();if(!item)return;let [g,id]=item,img=g.get(id);
+  if(!img||img.complete){done++;notify();next();return}
+  active++;let finish=()=>{img.removeEventListener?.('load',finish);img.removeEventListener?.('error',finish);active--;done++;notify();next()};
+  img.addEventListener?img.addEventListener('load',finish):(img.onload=finish);img.addEventListener?.('error',finish)}
+ function fill(){while(!paused&&active<parallelism&&queue.length)next()}
+ function warm(parallel=4){if(started||typeof Image==='undefined')return;started=true;parallelism=parallel;
+  queue=groups.flatMap(g=>g.ids().map(id=>[g,id]));fill()}
+ function pause(){paused=true}
+ function resume(){if(!paused)return;paused=false;fill()}
  function onProgress(f){listeners.push(f);f(done,total)}
- return {lazyImages,warm,onProgress,progress:()=>({done,total,started})};
+ return {lazyImages,warm,pause,resume,onProgress,progress:()=>({done,total,started,paused})};
 })();
 if(typeof globalThis!=='undefined')globalThis.ManmulLazyImages=ManmulLazyImages;
