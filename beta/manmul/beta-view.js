@@ -8,7 +8,8 @@
 // - Wide field: everything that stands (units, enemies, bars, effects) is drawn at BODY (half) size while the field,
 //   the path and the ranges keep their size. That reads as a field with 4× the area and 2× the ranges for the same
 //   units; manmul/beta-play.js halves the unit footprints to match, so 4× as many units fit.
-// - Camera: mouse wheel zooms around the cursor (up to ZOOM_MAX), wheel-button drag pans, a wheel click resets.
+// - Camera: mouse wheel zooms around the cursor (up to ZOOM_MAX). Right drag pans when no unit is selected (with a
+//   selection the right button still moves units), wheel-button drag pans too, and the mouse at a window edge scrolls.
 // Game rules are unchanged apart from the square path. Loaded after manmul/game.js; replaces some of its globals.
 (function(root){
  if(!root.COMBINADE_REDESIGN||typeof drawScene!=='function')return;
@@ -52,22 +53,43 @@
   const ox=b.cx+camera.x,oy=b.cy+camera.y;camera.x=px-b.cx-(px-ox)*z1/z0;camera.y=py-b.cy-(py-oy)*z1/z0;camera.zoom=z1;clampCamera();
  }
  function resetCamera(){camera.zoom=1;camera.x=0;camera.y=0}
+ let pan=null,pointer=null,edgeAt=0;// pointer: last mouse position in the window, for edge scrolling
+ const hasSelection=()=>units.some(u=>selected.includes(u.id));
  if(typeof canvas==='object'&&canvas&&typeof canvas.addEventListener==='function'){
-  let pan=null;
   canvas.addEventListener('wheel',e=>{if(introRemaining>0)return;e.preventDefault();zoomAt(e.clientX,e.clientY,Math.exp(-Math.max(-120,Math.min(120,e.deltaY))*.0018))},{passive:false});
   canvas.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault()},true);// no browser auto-scroll
+  // Pan: right drag when no unit is selected (with a selection the right button moves the units), or wheel-button drag.
   canvas.addEventListener('pointerdown',e=>{
-   if(e.button!==1)return;e.preventDefault();e.stopImmediatePropagation();
+   if(introRemaining>0||(typeof spectate!=='undefined'&&spectate))return;
+   if(!(e.button===1||(e.button===2&&!hasSelection())))return;
+   e.preventDefault();e.stopImmediatePropagation();
    pan={id:e.pointerId,x:e.clientX,y:e.clientY,moved:false};try{canvas.setPointerCapture(e.pointerId)}catch(err){}
   },true);
   canvas.addEventListener('pointermove',e=>{
    if(!pan||e.pointerId!==pan.id)return;const dx=e.clientX-pan.x,dy=e.clientY-pan.y;
-   if(!pan.moved&&Math.hypot(dx,dy)<4)return;pan.moved=true;pan.x=e.clientX;pan.y=e.clientY;
-   if(camera.zoom>1){camera.x+=dx;camera.y+=dy;clampCamera()}
+   if(!pan.moved&&Math.hypot(dx,dy)<4)return;
+   if(!pan.moved){pan.moved=true;canvas.style.cursor='grabbing'}
+   pan.x=e.clientX;pan.y=e.clientY;camera.x+=dx;camera.y+=dy;clampCamera();
   },true);
-  const end=e=>{if(!pan||e.pointerId!==pan.id)return;if(!pan.moved&&e.type==='pointerup')resetCamera();pan=null};
+  const end=e=>{if(!pan||e.pointerId!==pan.id)return;if(pan.moved)canvas.style.cursor='';pan=null};
   canvas.addEventListener('pointerup',end,true);canvas.addEventListener('pointercancel',end,true);
  }
+ if(typeof addEventListener==='function'){
+  addEventListener('mousemove',e=>{pointer={x:e.clientX,y:e.clientY}});
+  addEventListener('mouseout',e=>{if(!e.relatedTarget)pointer=null});
+  addEventListener('blur',()=>{pointer=null});
+ }
+ // Edge scrolling: while zoomed in, the mouse at a window edge moves the view that way (faster nearer the edge).
+ const SCROLL_EDGE=26,SCROLL_SPEED=900;
+ function edgeScroll(){
+  const now=typeof performance==='object'?performance.now()/1000:0,dt=Math.min(.05,Math.max(0,now-edgeAt));edgeAt=now;
+  if(!pointer||pan||camera.zoom<=1||introRemaining>0||typeof innerWidth!=='number')return;
+  if(typeof document==='object'&&document.querySelector?.('#modal')?.classList?.contains('hidden')===false)return;
+  const push=d=>d<SCROLL_EDGE?(1-Math.max(0,d)/SCROLL_EDGE):0;
+  const vx=push(pointer.x)-push(innerWidth-1-pointer.x),vy=push(pointer.y)-push(innerHeight-1-pointer.y);
+  if(!vx&&!vy)return;camera.x+=vx*SCROLL_SPEED*dt;camera.y+=vy*SCROLL_SPEED*dt;clampCamera();
+ }
+
  applyWorldTransform=function(t){
   if(!t.quarter){ctx.translate(t.x,t.y);ctx.scale(t.scale,t.scale);return}
   ctx.translate(t.cx,t.cy);ctx.transform(L.a*t.scale,L.b*t.scale,L.c*t.scale,L.d*t.scale,0,0);ctx.translate(-CX,-CY);
@@ -172,6 +194,7 @@
  const unitHalfW=u=>(hooks.unitBox?.(u)?.halfW??Math.max(types[u.type].radius/BODY+5,15*unitVisualScale(u)))*BODY,unitHeight=u=>(hooks.unitBox?.(u)?.height??26*unitVisualScale(u))*BODY;
  const baseScene=drawScene;
  drawScene=function(...a){
+  if(!spectateDrawing)edgeScroll();
   const saveUnits=units,saveEnemies=enemies;
   units=[...units].sort((p,q)=>depth(p.x,p.y)-depth(q.x,q.y));
   enemies=enemies.map(e=>{const p=pathPoint(e.d);return [depth(p.x,p.y),e]}).sort((p,q)=>p[0]-q[0]).map(x=>x[1]);
@@ -208,5 +231,5 @@
   ctx.save();ctx.strokeStyle='#dcf9b3';ctx.fillStyle='rgba(220,249,179,.08)';ctx.lineWidth=1.5/t.scale;ctx.beginPath();corners.forEach((c,i)=>i?ctx.lineTo(c.x,c.y):ctx.moveTo(c.x,c.y));ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
  };
 
- root.ManmulBetaView={angle:45,squash:SQUASH,field,toScreen,screenToWorld,depth,project,upright,center:{x:CX,y:CY},hooks,BODY,camera,zoomAt,resetCamera};
+ root.ManmulBetaView={edgeScroll,setPointer:p=>{pointer=p;edgeAt=typeof performance==='object'?performance.now()/1000:0},angle:45,squash:SQUASH,field,toScreen,screenToWorld,depth,project,upright,center:{x:CX,y:CY},hooks,BODY,camera,zoomAt,resetCamera};
 })(globalThis);

@@ -1,13 +1,13 @@
 'use strict';
 // Beta only (unit redesign): play-feel features on top of the quarter view and the cartoon art.
+//  - Summoning does not select the new unit, so it does not interrupt what the player was doing.
 //  - Special grades: 재앙·역설·신수 one each on the field, 천체 (no recipe uses it) two; a special unit's arrival
 //    shakes the screen and shows its name.
-//  - "One part short": the unit panel lists recipes the player could finish with a single more material.
+//  - "One part short" / reaction partner hints (hintsHtml): kept, but no longer shown in the unit panel.
 //  - Ranges: a selected unit shows its range, its support aura and who it supports or is supported by; hovering the
 //    ground shows the range it would have there.
 //  - See-through: units in front of a selected or hovered unit turn translucent.
-//  - Reactions: bigger mark badges above the health bar, a big popup when a reaction fires, and the panel lists the
-//    allies that complete a reaction with this unit's mark.
+//  - Reactions: bigger mark badges above the health bar, a big popup when a reaction fires.
 //  - Wide field (with the half-size bodies of manmul/beta-view.js): unit footprints are halved so 4× as many fit.
 // Loaded after manmul/beta-cartoon.js.
 (function(root){
@@ -19,6 +19,15 @@
  for(const t of Object.values(types))if(typeof t.radius==='number')t.radius*=BODY;
  const baseFootprint=unitFootprint;unitFootprint=function(type){return baseFootprint(type)*BODY};
  const footY=u=>u.y+(unitFootY(u)-u.y)*BODY;// the grade base centre on the ground, at body size
+
+ // ---- Summoning keeps the current selection (the new unit is not selected) ----
+ const baseSummon=summon;
+ summon=function(...a){
+  const keep=selected,keepEnemy=selectedEnemy,r=baseSummon.apply(this,a);
+  if(selected!==keep||selectedEnemy!==keepEnemy){selected=keep.filter(id=>units.some(u=>u.id===id));selectedEnemy=keepEnemy;updateUI()}
+  return r;
+ };
+ {const button=typeof document==='object'?document.querySelector?.('#summon'):null;if(button)button.onclick=()=>summon()}// game.js bound the old function
 
  // ---- Special grade limits ----
  const LIMITS={'재앙':1,'역설':1,'신수':1,'천체':2};
@@ -85,15 +94,7 @@
   if(react.length)html+=`<h4>반응 (${markOf(typeId)} 표식)</h4><ul>${react.map(r=>`<li><b>${r.name}</b>: ${r.other}${r.allies?(r.allies.length?` — 아군 <em>${r.allies.slice(0,3).join(', ')}</em>`:' — 전장에 없음'):''}</li>`).join('')}</ul>`;
   return html+'</div>';
  }
- const baseUpdateUI=updateUI;
- updateUI=function(...a){
-  const r=baseUpdateUI.apply(this,a);
-  try{
-   const box=document.querySelector('#selection');const sel=units.filter(u=>selected.includes(u.id));
-   if(box&&sel.length===1&&box.querySelector('.unit-compact')&&!box.querySelector('.beta-hints')){const html=hintsHtml(sel[0].type);if(html)box.querySelector('.unit-compact').insertAdjacentHTML('afterend',html)}
-  }catch(e){}
-  return r;
- };
+ // The panel no longer shows these hints (too busy under the unit description); hintsHtml stays for later use.
 
  // ---- Ranges and support ----
  const auraOf=id=>(root.ManmulUpperBasicData?.[id]||root.ManmulBasicData?.[id])?.aura||null;
