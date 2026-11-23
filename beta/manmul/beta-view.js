@@ -82,7 +82,11 @@
   g.strokeStyle=C.rim;g.lineWidth=3;g.strokeRect(field.x,field.y,field.w,field.h);
  }
  let groundLayer=null;
+ // Hooks for finished art (manmul/beta-cartoon.js): ground image (drawn in screen space, since the world pass clips to
+ // the world rectangle and would cut the platform sides), unit and enemy bodies, unit size for picking.
+ const hooks={groundReady:null,groundScreen:null,unitBody:null,enemyBody:null,unitBox:null};
  drawBlendedArena=function(){
+  if(hooks.groundReady&&hooks.groundReady())return;
   if(groundLayer===null&&typeof document==='object'&&typeof document.createElement==='function'){
    const layer=document.createElement('canvas'),g=layer?.getContext?.('2d');
    if(g){layer.width=world.w*2;layer.height=world.h*2;g.scale(2,2);paintGround(g);groundLayer=layer}else groundLayer=false;
@@ -96,9 +100,10 @@
  // Platform sides: the two near edges get a visible thickness (screen space, under the ground).
  const baseBackdrop=drawForestBackdrop;
  drawForestBackdrop=function(...a){
-  baseBackdrop.apply(this,a);
+  if(!(hooks.backdrop&&hooks.backdrop()))baseBackdrop.apply(this,a);
   const t=transform(),cam=introRemaining>0?introCameraState():{zoom:1,x:0,y:0};
   const at=(x,y)=>{const p=toScreen(x,y,t);return {x:t.cx+(p.x-t.cx)*cam.zoom+cam.x*t.scale,y:t.cy+(p.y-t.cy)*cam.zoom+cam.y*t.scale}};
+  if(hooks.groundScreen&&hooks.groundScreen(at(CX,CY),t.scale*cam.zoom))return;// the finished ground image has its own sides
   const left=at(field.x,field.y+field.h),bottom=at(field.x+field.w,field.y+field.h),right=at(field.x+field.w,field.y),h=THICK*t.scale*cam.zoom;
   ctx.save();ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.moveTo(left.x,left.y+h);ctx.lineTo(bottom.x,bottom.y+h+h*.6);ctx.lineTo(right.x,right.y+h);ctx.lineTo(right.x,right.y+h*1.6);ctx.lineTo(bottom.x,bottom.y+h*2.4);ctx.lineTo(left.x,left.y+h*1.6);ctx.closePath();ctx.fill();
   for(const [p,q,color] of [[left,bottom,C.sideL],[bottom,right,C.sideR]]){ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.lineTo(q.x,q.y+h);ctx.lineTo(p.x,p.y+h);ctx.closePath();ctx.fill();ctx.strokeStyle=C.sideLine;ctx.lineWidth=1;ctx.stroke()}
@@ -106,7 +111,7 @@
  };
 
  // ---- Standing things ----
- const baseUnitSprite=drawUnitSprite;drawUnitSprite=function(unit,...rest){return upright(unit.x,unit.y,()=>baseUnitSprite.call(this,unit,...rest))};
+ const baseUnitSprite=drawUnitSprite;drawUnitSprite=function(unit,...rest){return upright(unit.x,unit.y,()=>(hooks.unitBody&&hooks.unitBody(unit))||baseUnitSprite.call(this,unit,...rest))};
  const baseUnitAura=drawUnitGradeAura;drawUnitGradeAura=function(unit,...rest){return upright(unit.x,unit.y,()=>baseUnitAura.call(this,unit,...rest))};
  // The grade base is already a flat ellipse in screen terms: keep it level with the screen, not turned with the ground.
  const baseUnitBase=drawUnitGradeBase;drawUnitGradeBase=function(unit,...rest){return upright(unit.x,unit.y,()=>baseUnitBase.call(this,unit,...rest))};
@@ -114,8 +119,9 @@
  const baseEnemySprite=drawEnemySprite;
  drawEnemySprite=function(enemy,point,...rest){
   const size=enemyVisualSize(enemy.kind);ctx.save();ctx.fillStyle='rgba(0,0,0,.32)';ctx.beginPath();ctx.ellipse(point.x,point.y+1,size*.34,size*.12,0,0,Math.PI*2);ctx.fill();ctx.restore();
-  return baseEnemySprite.call(this,enemy,point,...rest);
+  return enemyBody(enemy,point,...rest);
  };
+ function enemyBody(enemy,point,...rest){return (hooks.enemyBody&&hooks.enemyBody(enemy,point,...rest))||baseEnemySprite(enemy,point,...rest)}
  // Face the way the enemy moves on screen.
  enemyFacing=function(distance){const a=pathPoint(distance),b=pathPoint(distance+2),v=project(b.x-a.x,b.y-a.y);return v.x>=0?1:-1};
  if(typeof drawSkillFx==='function'){const base=drawSkillFx;drawSkillFx=function(...a){return uprightImages(()=>base.apply(this,a),.5)}}
@@ -123,7 +129,8 @@
  const baseFeedback=drawCombatFeedback;drawCombatFeedback=function(...a){return uprightText(()=>baseFeedback.apply(this,a))};
 
  // ---- Depth ----
- const unitHalfW=u=>Math.max(types[u.type].radius+5,15*unitVisualScale(u)),unitHeight=u=>26*unitVisualScale(u);
+ const unitFoot=u=>hooks.unitBox?.(u)?.foot??0;// finished art stands on the grade base, below unit.y
+ const unitHalfW=u=>hooks.unitBox?.(u)?.halfW??Math.max(types[u.type].radius+5,15*unitVisualScale(u)),unitHeight=u=>hooks.unitBox?.(u)?.height??26*unitVisualScale(u);
  const baseScene=drawScene;
  drawScene=function(...a){
   const saveUnits=units,saveEnemies=enemies;
@@ -138,23 +145,23 @@
   const front=[],ghost=[];
   for(const e of enemies){
    const p=pathPoint(e.d),eh=enemyVisualSize(e.kind),ew=eh*.5;let near=false,behind=false;
-   for(const u of units){const v=project(u.x-p.x,u.y-p.y);if(Math.abs(v.x)>=unitHalfW(u)+ew||v.y<=-eh||v.y-unitHeight(u)>=0)continue;if(v.y>0)behind=true;else near=true}
+   for(const u of units){const v=project(u.x-p.x,u.y-p.y);v.y+=unitFoot(u);if(Math.abs(v.x)>=unitHalfW(u)+ew||v.y<=-eh||v.y-unitHeight(u)>=0)continue;if(v.y>0)behind=true;else near=true}
    if(behind)ghost.push(e);else if(near)front.push(e);
   }
   if(!front.length&&!ghost.length)return;
   const t=transform();ctx.save();applyWorldTransform(t);
-  for(const e of front){const p=pathPoint(e.d);upright(p.x,p.y,()=>baseEnemySprite(e,p))}
+  for(const e of front){const p=pathPoint(e.d);upright(p.x,p.y,()=>enemyBody(e,p))}
   ctx.globalAlpha=.42;
-  for(const e of ghost){const p=pathPoint(e.d);upright(p.x,p.y,()=>baseEnemySprite(e,p))}
+  for(const e of ghost){const p=pathPoint(e.d);upright(p.x,p.y,()=>enemyBody(e,p))}
   ctx.restore();
  }
 
  // ---- Picking and drag selection (screen based) ----
- unitHit=function(u,p){const v=project(p.x-u.x,p.y-u.y);return Math.abs(v.x)<=unitHalfW(u)&&v.y<=8&&v.y>=-unitHeight(u)};
+ unitHit=function(u,p){const v=project(p.x-u.x,p.y-u.y),f=unitFoot(u);return Math.abs(v.x)<=unitHalfW(u)&&v.y<=f+8&&v.y>=f-unitHeight(u)};
  enemyHit=function(e,p){const q=pathPoint(e.d),size=enemyVisualSize(e.kind),v=project(p.x-q.x,p.y-q.y);return Math.abs(v.x)<=size*.45&&v.y<=6&&v.y>=-size};
  unitsInBox=function(a,b){
   const t=transform(),A=toScreen(a.x,a.y,t),B=toScreen(b.x,b.y,t),x1=Math.min(A.x,B.x),x2=Math.max(A.x,B.x),y1=Math.min(A.y,B.y),y2=Math.max(A.y,B.y);
-  return units.filter(u=>{const f=toScreen(u.x,u.y,t),mid=f.y-unitHeight(u)*t.scale/2;return f.x>=x1&&f.x<=x2&&((f.y>=y1&&f.y<=y2)||(mid>=y1&&mid<=y2))});
+  return units.filter(u=>{const f=toScreen(u.x,u.y,t);f.y+=unitFoot(u)*t.scale;const mid=f.y-unitHeight(u)*t.scale/2;return f.x>=x1&&f.x<=x2&&((f.y>=y1&&f.y<=y2)||(mid>=y1&&mid<=y2))});
  };
  drawDragBox=function(d){
   const t=transform(),A=toScreen(d.x,d.y,t),B=toScreen(d.end.x,d.end.y,t);
@@ -162,5 +169,5 @@
   ctx.save();ctx.strokeStyle='#dcf9b3';ctx.fillStyle='rgba(220,249,179,.08)';ctx.lineWidth=1.5/t.scale;ctx.beginPath();corners.forEach((c,i)=>i?ctx.lineTo(c.x,c.y):ctx.moveTo(c.x,c.y));ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
  };
 
- root.ManmulBetaView={angle:45,squash:SQUASH,field,toScreen,screenToWorld,depth};
+ root.ManmulBetaView={angle:45,squash:SQUASH,field,toScreen,screenToWorld,depth,project,upright,center:{x:CX,y:CY},hooks};
 })(globalThis);

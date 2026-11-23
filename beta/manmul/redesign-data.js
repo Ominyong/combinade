@@ -5,4 +5,7 @@
  const basic=root.ManmulBasicData,upper=root.ManmulUpperBasicData;
  for(const u of root.ManmulRosterData.units)if(!basic[u.id]&&!upper?.[u.id]&&u.grade==='노말')basic[u.id]={mark:null,kind:'single'};
  for(const [id,mark] of Object.entries(R.marks)){let d=basic[id]||upper?.[id];if(d)d.mark=mark}
+ // Effects that differ from the plan (tools/unit-redesign/abilities.cjs).
+ const fix={"R018":{"dotType":"burn"},"L003":{"auraCategories":["기계","열기"]}};
+ for(const [id,f] of Object.entries(fix)){let d=basic[id]||upper?.[id];if(!d)continue;if(f.dotType)d.dotType=f.dotType;if(f.auraCategories&&d.aura){d.aura={...d.aura,categories:f.auraCategories};delete d.aura.category}}
 })(globalThis);

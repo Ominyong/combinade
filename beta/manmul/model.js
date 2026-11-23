@@ -24,7 +24,8 @@
   // v5 normal 10 is scaled to the existing game's normal attack 36.
   // Paradox has no documented skill power; approximate it from normal-equivalent cost.
   const rawSkillPower=u.skill_power??(paradox?200+10*u.normal_cost:null),normal=u.grade==='노말'?normalBalance[u.id]:null;
-  return {...u,categories:Object.keys(categories).filter(category=>categories[category].has(u.id)),attack:normal?.attack??Math.round(u.attack*SCALE),skill_power:rawSkillPower===null?null:Math.round(rawSkillPower*SCALE),uses_basic:!special&&!paradox&&u.attack>0,attack_interval_seconds:normal?.interval??(u.attack_interval_seconds&&u.attack_interval_seconds>0?u.attack_interval_seconds:null),range_world:u.range_tiles*45};
+  // The unit redesign (beta) gives its new units their own categories; otherwise the fixed ID lists apply.
+  return {...u,categories:Array.isArray(u.categories)?[...u.categories]:Object.keys(categories).filter(category=>categories[category].has(u.id)),attack:normal?.attack??Math.round(u.attack*SCALE),skill_power:rawSkillPower===null?null:Math.round(rawSkillPower*SCALE),uses_basic:!special&&!paradox&&u.attack>0,attack_interval_seconds:normal?.interval??(u.attack_interval_seconds&&u.attack_interval_seconds>0?u.attack_interval_seconds:null),range_world:u.range_tiles*45};
  })}
  return {SCALE,buildUnits};
 });
