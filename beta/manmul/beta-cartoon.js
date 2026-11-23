@@ -156,7 +156,9 @@
  const SWIRL=.45,FLASH=.1,POP=.4,TRANSFORM=SWIRL+FLASH+POP;
  const clock=()=>typeof performance==='object'&&performance.now?performance.now()/1000:combatTime;
  const transforms=[];let pendingMaterials=null;
- const snapshot=u=>({type:u.type,x:u.x,y:unitFootY(u),lift:unitLift(u)});
+ // Ground point of the grade base at the view's body size (standing things are drawn smaller than the field).
+ const footAt=u=>u.y+(unitFootY(u)-u.y)*(view.BODY||1);
+ const snapshot=u=>({type:u.type,x:u.x,y:footAt(u),lift:unitLift(u)});
  function popScale(u){
   const t=u.cartoonPopAt;if(t===undefined)return 1;const p=clock()-t;
   if(p<SWIRL+FLASH*.5)return 0;const q=(p-SWIRL-FLASH*.5)/(POP+FLASH*.5);if(q>=1){delete u.cartoonPopAt;return 1}
@@ -180,7 +182,7 @@
   // A fusion or conversion: the whirlwind replaces the old pixel arrival sheet; the sound stays.
   globalThis.ManmulSound?.play('fuse',{grade:key});
   const start=clock();unit.cartoonPopAt=start;
-  transforms.push({unit,start,color:gradeColors[key]||'#ffe9a8',materials:pendingMaterials,x:unit.x,y:unitFootY(unit)});
+  transforms.push({unit,start,color:gradeColors[key]||'#ffe9a8',materials:pendingMaterials,x:unit.x,y:footAt(unit)});
  };
  function star(x,y,r,color){ctx.beginPath();for(let i=0;i<8;i++){const a=i*Math.PI/4,d=i%2?r*.35:r;ctx.lineTo(x+Math.cos(a)*d,y+Math.sin(a)*d)}ctx.closePath();ctx.fillStyle=color;ctx.fill()}
  // Fusion pictures (assets/cartoon/fusion/): whirl-back/whirl-front 8-frame loops and sparkle are drawn white and
@@ -293,9 +295,9 @@
    const a=attackStyle(shot.type),sheet=fxImage(`${a.style}-${a.family}`),carrier=flying(a.style)||a.style==='chain'?sheet:fxImage(`single-${a.family}`);
    if(!sheet||!carrier){fallback.push(shot);continue}
    const unit=shot.unit,target=shot.target;
-   const from=unit?{x:unit.x,y:unitFootY(unit),lift:unitLift(unit)}:{x:shot.x??shot.impact.x,y:shot.y??shot.impact.y,lift:0};
+   const from=unit?{x:unit.x,y:footAt(unit),lift:unitLift(unit)}:{x:shot.x??shot.impact.x,y:shot.y??shot.impact.y,lift:0};
    const end=target?pathPoint(target.d):shot.impact,endLift=target?enemyLift(target):0;
-   const screen=view.project(end.x-from.x,end.y-from.y),angle=Math.atan2(screen.y-(endLift-from.lift),screen.x);
+   const screen=view.project(end.x-from.x,end.y-from.y),angle=Math.atan2(screen.y-(endLift-from.lift)*(view.BODY||1),screen.x);
    if(shot.hitAt!==null){
     // Landed: area/slow/dot/chain start their own animation once; flying styles show their two impact frames.
     if(!shot.cartoonImpact){shot.cartoonImpact=true;if(!flying(a.style))impacts.push({sheet,style:a.style,from,x:shot.impact.x,y:shot.impact.y,lift:endLift,angle,start:shot.hitAt})}
@@ -313,7 +315,7 @@
    const frame=Math.min(5,Math.floor(p*6));
    if(fx.style==='chain'){
     // Stretch the zigzag from the attacker to the target.
-    const sx=fx.from.x,sy=fx.from.y,dist=Math.hypot(view.project(fx.x-sx,fx.y-sy).x,view.project(fx.x-sx,fx.y-sy).y-(fx.lift-fx.from.lift));
+    const sx=fx.from.x,sy=fx.from.y,B=view.BODY||1,dist=Math.hypot(view.project(fx.x-sx,fx.y-sy).x,view.project(fx.x-sx,fx.y-sy).y-(fx.lift-fx.from.lift)*B)/B;// drawn inside the body-size frame
     view.upright(sx,sy,()=>{ctx.save();ctx.translate(sx,sy-fx.from.lift);ctx.rotate(fx.angle);ctx.imageSmoothingEnabled=true;ctx.drawImage(fx.sheet,frame*FX_FRAME,0,FX_FRAME,FX_FRAME,0,-FX_SIZE/2,dist,FX_SIZE);ctx.restore()});
    }else view.upright(fx.x,fx.y,()=>frameAt(fx.sheet,frame,fx.x,fx.y-fx.lift,0,{w:FX_SIZE*1.4,h:FX_SIZE*1.4}));
   }

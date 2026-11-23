@@ -8,11 +8,27 @@
 //  - See-through: units in front of a selected or hovered unit turn translucent.
 //  - Reactions: bigger mark badges above the health bar, a big popup when a reaction fires, and the panel lists the
 //    allies that complete a reaction with this unit's mark.
+//  - Wide field (with the half-size bodies of manmul/beta-view.js): unit footprints are halved so 4× as many fit.
+//    Enemies come at half the rate: half as many per round, each with twice the health and gold, and the field holds
+//    half as many (limit 100 → 50), so a round keeps its total health, gold and leak tolerance.
 // Loaded after manmul/beta-cartoon.js.
 (function(root){
  const view=root.ManmulBetaView;
  if(!root.COMBINADE_REDESIGN||!view)return;
- const ink='#1a1a24';
+ const ink='#1a1a24',BODY=view.BODY||1;
+
+ // ---- Wide field: half footprints, half the enemy rate ----
+ for(const t of Object.values(types))if(typeof t.radius==='number')t.radius*=BODY;
+ const baseFootprint=unitFootprint;unitFootprint=function(type){return baseFootprint(type)*BODY};
+ const footY=u=>u.y+(unitFootY(u)-u.y)*BODY;// the grade base centre on the ground, at body size
+ const RATE=.5,WAVE_KINDS=new Set(['normal','fast','armor','swarm']);
+ for(const k of WAVE_KINDS){const spec=combatRules.enemyKinds[k];if(spec)spec.reward*=1/RATE}
+ const baseStartWave=startWave;
+ startWave=function(...a){const before=wave,r=baseStartWave.apply(this,a);if(wave!==before&&spawnLeft>1){spawnLeft=Math.max(1,Math.round(spawnLeft*RATE));spawnInterval=spawnDuration/spawnLeft}return r};
+ const baseSpawnEnemy=spawnEnemy;
+ spawnEnemy=function(kind,...a){const n=enemies.length,r=baseSpawnEnemy.call(this,kind,...a),e=enemies[n];if(e&&enemies.length>n&&WAVE_KINDS.has(kind)){e.hp/=RATE;e.max/=RATE}return r};
+ const baseLimit=enemyLimit;enemyLimit=function(){return Math.round(baseLimit()*RATE)};
+ if(root.ManmulSound?.enemyCount){const base=root.ManmulSound.enemyCount;root.ManmulSound.enemyCount=n=>base(n/RATE)}// alarms at the same share of the limit
 
  // ---- Special grade limits ----
  const LIMITS={'재앙':1,'역설':1,'신수':1,'천체':2};
@@ -86,6 +102,11 @@
    const box=document.querySelector('#selection');const sel=units.filter(u=>selected.includes(u.id));
    if(box&&sel.length===1&&box.querySelector('.unit-compact')&&!box.querySelector('.beta-hints')){const html=hintsHtml(sel[0].type);if(html)box.querySelector('.unit-compact').insertAdjacentHTML('afterend',html)}
   }catch(e){}
+  try{
+   const limit=enemyLimit(),n=enemies.length,gauge=document.querySelector('#countGauge'),hud=document.querySelector('.hud-enemies'),label=document.querySelector('.hud-limit');
+   gauge?.style?.setProperty('width',Math.min(100,n/limit*100)+'%');if(hud)hud.dataset.level=n>=limit*.8?'danger':n>=limit*.6?'warn':'safe';
+   document.querySelector('#count')?.classList?.toggle('danger',n>=limit*.8);if(label&&label.textContent!==`/ ${limit}`)label.textContent=`/ ${limit}`;
+  }catch(e){}
   return r;
  };
 
@@ -107,14 +128,14 @@
  function ring(x,y,r,color,alpha,dash=null,width=2,fill=0){ctx.save();ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);if(fill){ctx.globalAlpha=fill;ctx.fillStyle=color;ctx.fill()}ctx.globalAlpha=alpha;if(dash)ctx.setLineDash(dash);ctx.strokeStyle='#1a1a24';ctx.lineWidth=width+2;ctx.stroke();ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();ctx.restore()}
  function drawRanges(){
   const sel=units.filter(u=>selected.includes(u.id));if(sel.length!==1)return;
-  const u=sel[0],fy=unitFootY(u),aura=auraOf(u.type);
+  const u=sel[0],fy=footY(u),aura=auraOf(u.type),mark=19*BODY+3;
   // Support this unit gives: aura circle and the allies it reaches.
   if(aura){
    ring(u.x,fy,aura.radius,'#7fe0a8',.8,[10,6],2.5,.08);
-   for(const o of units)if(o!==u&&Math.hypot(o.x-u.x,o.y-u.y)<=aura.radius&&auraReaches(aura,o))ring(o.x,unitFootY(o),19,'#7fe0a8',1,null,3.5,.25);
+   for(const o of units)if(o!==u&&Math.hypot(o.x-u.x,o.y-u.y)<=aura.radius&&auraReaches(aura,o))ring(o.x,footY(o),mark,'#7fe0a8',1,null,3,.25);
   }
   // Support this unit receives: allies whose aura covers it.
-  for(const o of units){if(o===u)continue;const a=auraOf(o.type);if(a&&Math.hypot(o.x-u.x,o.y-u.y)<=a.radius&&auraReaches(a,u))ring(o.x,unitFootY(o),19,'#ffd77a',1,[6,4],3.5,.2)}
+  for(const o of units){if(o===u)continue;const a=auraOf(o.type);if(a&&Math.hypot(o.x-u.x,o.y-u.y)<=a.radius&&auraReaches(a,u))ring(o.x,footY(o),mark,'#ffd77a',1,[6,4],3,.2)}
   // Move preview: the range it would have at the cursor.
   if(mouse&&!units.some(o=>unitHit(o,mouse))){const r=v5Combat.range(u);ring(mouse.x,mouse.y,r,'#d8f5bd',.35,[8,6],1.5);ring(mouse.x,mouse.y,6,'#d8f5bd',.6,null,1.5)}
  }
@@ -123,7 +144,7 @@
 
  // ---- See-through: units in front of the one you look at ----
  const cartoon=root.ManmulBetaCartoon,hooks=view.hooks;
- function boxOf(u){const b=hooks.unitBox?.(u),h=b?.height??26*unitVisualScale(u),w=b?.halfW??15*unitVisualScale(u),f=view.toScreen(u.x,(b?u.y+b.foot:u.y)),t=transform();return {x0:f.x-w*t.scale,x1:f.x+w*t.scale,y0:f.y-h*t.scale,y1:f.y,depth:view.depth(u.x,b?u.y+b.foot:u.y)}}
+ function boxOf(u){const b=hooks.unitBox?.(u),h=(b?.height??26*unitVisualScale(u))*BODY,w=(b?.halfW??15*unitVisualScale(u))*BODY,fy=b?u.y+b.foot*BODY:u.y,f=view.toScreen(u.x,fy),t=transform();return {x0:f.x-w*t.scale,x1:f.x+w*t.scale,y0:f.y-h*t.scale,y1:f.y,depth:view.depth(u.x,fy)}}
  let faded=new Set(),fadedAt=-1;
  function fadedUnits(){
   const now=typeof combatTime==='number'?combatTime:0;if(now===fadedAt)return faded;fadedAt=now;faded=new Set();
@@ -157,7 +178,7 @@
  const R=root.ManmulReactions;
  if(R&&typeof R.react==='function'){
   const baseReact=R.react;
-  R.react=function(name,target,ctx2,...rest){const ok=baseReact.call(this,name,target,ctx2,...rest);if(ok&&target&&popups.length<24){const p=pathPoint(target.d);popups.push({name,x:p.x,y:enemyBarY(target,p)-22,start:combatTime})}return ok};
+  R.react=function(name,target,ctx2,...rest){const ok=baseReact.call(this,name,target,ctx2,...rest);if(ok&&target&&popups.length<24){const p=pathPoint(target.d);popups.push({name,x:p.x,y:p.y+(enemyBarY(target,p)-22-p.y)*BODY,start:combatTime})}return ok};
  }
  function drawPopups(){
   const now=combatTime;
@@ -165,7 +186,7 @@
    const p=popups[i],q=(now-p.start)/.9;if(!(q>=0&&q<1)){if(q>=1)popups.splice(i,1);continue}
    const s=q<.15?.6+q/.15*.6:q<.25?1.2-(q-.15)/.1*.2:1,y=p.y-q*16,color=REACTION_COLOR[p.name]||'#fff';
    view.upright(p.x,y,()=>{ctx.save();ctx.globalAlpha=q>.7?(1-q)/.3:1;ctx.translate(p.x,y);ctx.scale(s,s);ctx.font='900 15px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.lineJoin='round';ctx.lineWidth=4;ctx.strokeStyle=ink;ctx.strokeText(p.name+'!',0,0);ctx.fillStyle=color;ctx.fillText(p.name+'!',0,0);ctx.restore()});
+    ctx.lineJoin='round';ctx.lineWidth=4;ctx.strokeStyle=ink;ctx.strokeText(p.name+'!',0,0);ctx.fillStyle=color;ctx.fillText(p.name+'!',0,0);ctx.restore()},.8);
   }
  }
  const baseFeedback=drawCombatFeedback;

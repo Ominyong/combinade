@@ -5,6 +5,10 @@
 // - The ground is turned 45° and laid down 2:1 like isometric tiles, and drawn here in code (temporary art): a raised
 //   platform with tiles, a stone path and the placement area. Units, enemies, bars, text and effects stand upright.
 // - Picking, the drag box, enemy facing and near/far overlap follow the screen.
+// - Wide field: everything that stands (units, enemies, bars, effects) is drawn at BODY (half) size while the field,
+//   the path and the ranges keep their size. That reads as a field with 4× the area and 2× the ranges for the same
+//   units; manmul/beta-play.js halves the unit footprints to match, so 4× as many units fit.
+// - Camera: mouse wheel zooms around the cursor (up to ZOOM_MAX), wheel-button drag pans, a wheel click resets.
 // Game rules are unchanged apart from the square path. Loaded after manmul/game.js; replaces some of its globals.
 (function(root){
  if(!root.COMBINADE_REDESIGN||typeof drawScene!=='function')return;
@@ -21,16 +25,49 @@
  Object.assign(world.outer,{x:CX-PATH/2,y:CY-PATH/2,w:PATH,h:PATH});
  Object.assign(world.inner,{x:world.outer.x+INNER_GAP,y:world.outer.y+INNER_GAP,w:PATH-2*INNER_GAP,h:PATH-2*INNER_GAP});
  const field={x:world.outer.x-EDGE,y:world.outer.y-EDGE,w:PATH+2*EDGE,h:PATH+2*EDGE};
- const THICK=20,HEADROOM=46;// platform side height and room above the far corner for standing sprites (world units)
+ const THICK=20,HEADROOM=46*.5+10;// platform side height and room above the far corner for standing sprites (world units)
 
- transform=function(){
+ const BODY=.5,TEXT=.75,ZOOM_MAX=3;
+ const camera={zoom:1,x:0,y:0};// player camera (screen pixels); the intro camera is applied on top of the default view
+ function baseTransform(){
   const m=stageMetrics(),top=84,bottom=90,avail=STAGE_H-top-bottom,hw=field.w/2,hh=field.h/2;
   const spanX=2*project(hw,-hh).x,spanY=2*project(hw,hh).y+THICK+HEADROOM;
   const s=Math.min(STAGE_W/spanX,avail/spanY)*.97,S=s*m.scale;
   const cx=m.left+STAGE_W/2*m.scale,cy=m.top+(top+avail/2+(HEADROOM-THICK)/2*s)*m.scale;
+  return {S,cx,cy,w:STAGE_W*m.scale,h:avail*m.scale};
+ }
+ transform=function(){
+  const b=baseTransform(),z=introRemaining>0?1:camera.zoom,S=b.S*z,cx=b.cx+(z===1?0:camera.x),cy=b.cy+(z===1?0:camera.y);
   // x/y/scale keep their old meaning (field centre = x + world.w*scale/2) for code that only needs the centre.
-  return {scale:S,ky:1,x:cx-world.w*S/2,y:cy-world.h*S/2,cx,cy,quarter:true};
+  return {scale:S,ky:1,x:cx-world.w*S/2,y:cy-world.h*S/2,cx,cy,quarter:true,zoom:z};
  };
+ function clampCamera(){
+  const b=baseTransform(),z=camera.zoom=Math.max(1,Math.min(ZOOM_MAX,camera.zoom));
+  const mx=(z-1)*b.w/2,my=(z-1)*b.h/2;camera.x=Math.max(-mx,Math.min(mx,camera.x));camera.y=Math.max(-my,Math.min(my,camera.y));
+  if(z<=1.001){camera.zoom=1;camera.x=0;camera.y=0}
+ }
+ // Zoom by factor around a screen point, keeping the ground under it in place.
+ function zoomAt(px,py,factor){
+  const b=baseTransform(),z0=camera.zoom,z1=Math.max(1,Math.min(ZOOM_MAX,z0*factor));if(z1===z0)return;
+  const ox=b.cx+camera.x,oy=b.cy+camera.y;camera.x=px-b.cx-(px-ox)*z1/z0;camera.y=py-b.cy-(py-oy)*z1/z0;camera.zoom=z1;clampCamera();
+ }
+ function resetCamera(){camera.zoom=1;camera.x=0;camera.y=0}
+ if(typeof canvas==='object'&&canvas&&typeof canvas.addEventListener==='function'){
+  let pan=null;
+  canvas.addEventListener('wheel',e=>{if(introRemaining>0)return;e.preventDefault();zoomAt(e.clientX,e.clientY,Math.exp(-Math.max(-120,Math.min(120,e.deltaY))*.0018))},{passive:false});
+  canvas.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault()},true);// no browser auto-scroll
+  canvas.addEventListener('pointerdown',e=>{
+   if(e.button!==1)return;e.preventDefault();e.stopImmediatePropagation();
+   pan={id:e.pointerId,x:e.clientX,y:e.clientY,moved:false};try{canvas.setPointerCapture(e.pointerId)}catch(err){}
+  },true);
+  canvas.addEventListener('pointermove',e=>{
+   if(!pan||e.pointerId!==pan.id)return;const dx=e.clientX-pan.x,dy=e.clientY-pan.y;
+   if(!pan.moved&&Math.hypot(dx,dy)<4)return;pan.moved=true;pan.x=e.clientX;pan.y=e.clientY;
+   if(camera.zoom>1){camera.x+=dx;camera.y+=dy;clampCamera()}
+  },true);
+  const end=e=>{if(!pan||e.pointerId!==pan.id)return;if(!pan.moved&&e.type==='pointerup')resetCamera();pan=null};
+  canvas.addEventListener('pointerup',end,true);canvas.addEventListener('pointercancel',end,true);
+ }
  applyWorldTransform=function(t){
   if(!t.quarter){ctx.translate(t.x,t.y);ctx.scale(t.scale,t.scale);return}
   ctx.translate(t.cx,t.cy);ctx.transform(L.a*t.scale,L.b*t.scale,L.c*t.scale,L.d*t.scale,0,0);ctx.translate(-CX,-CY);
@@ -40,8 +77,9 @@
  pos=function(e){return screenToWorld(e.clientX,e.clientY)};
 
  // Upright around a ground point: undo the ground projection locally, keeping the world scale.
- function standUp(x,y){ctx.save();ctx.translate(x,y);ctx.transform(Li.a,Li.b,Li.c,Li.d,0,0);ctx.translate(-x,-y)}
- function upright(x,y,fn){standUp(x,y);try{return fn()}finally{ctx.restore()}}
+ // k: size of the standing thing (BODY by default, see the header).
+ function standUp(x,y,k=BODY){ctx.save();ctx.translate(x,y);ctx.transform(Li.a,Li.b,Li.c,Li.d,0,0);if(k!==1)ctx.scale(k,k);ctx.translate(-x,-y)}
+ function upright(x,y,fn,k=BODY){standUp(x,y,k);try{return fn()}finally{ctx.restore()}}
  viewUprightBegin=function(x,y){standUp(x,y);return true};
  function uprightImages(fn,fy){
   const draw=ctx.drawImage;
@@ -54,7 +92,7 @@
   try{return fn()}finally{delete ctx.drawImage}
  }
  function uprightText(fn){
-  const wrap=name=>{const base=ctx[name];ctx[name]=function(text,x,y,...rest){standUp(x,y);try{return base.call(ctx,text,x,y,...rest)}finally{ctx.restore()}}};
+  const wrap=name=>{const base=ctx[name];ctx[name]=function(text,x,y,...rest){standUp(x,y,TEXT);try{return base.call(ctx,text,x,y,...rest)}finally{ctx.restore()}}};
   wrap('fillText');wrap('strokeText');
   try{return fn()}finally{delete ctx.fillText;delete ctx.strokeText}
  }
@@ -129,8 +167,9 @@
  const baseFeedback=drawCombatFeedback;drawCombatFeedback=function(...a){return uprightText(()=>baseFeedback.apply(this,a))};
 
  // ---- Depth ----
- const unitFoot=u=>hooks.unitBox?.(u)?.foot??0;// finished art stands on the grade base, below unit.y
- const unitHalfW=u=>hooks.unitBox?.(u)?.halfW??Math.max(types[u.type].radius+5,15*unitVisualScale(u)),unitHeight=u=>hooks.unitBox?.(u)?.height??26*unitVisualScale(u);
+ // Sizes on the ground plane in world units, at BODY size.
+ const unitFoot=u=>(hooks.unitBox?.(u)?.foot??0)*BODY;// finished art stands on the grade base, below unit.y
+ const unitHalfW=u=>(hooks.unitBox?.(u)?.halfW??Math.max(types[u.type].radius/BODY+5,15*unitVisualScale(u)))*BODY,unitHeight=u=>(hooks.unitBox?.(u)?.height??26*unitVisualScale(u))*BODY;
  const baseScene=drawScene;
  drawScene=function(...a){
   const saveUnits=units,saveEnemies=enemies;
@@ -144,7 +183,7 @@
   if(introRemaining>0||!enemies.length||!units.length)return;
   const front=[],ghost=[];
   for(const e of enemies){
-   const p=pathPoint(e.d),eh=enemyVisualSize(e.kind),ew=eh*.5;let near=false,behind=false;
+   const p=pathPoint(e.d),eh=enemyVisualSize(e.kind)*BODY,ew=eh*.5;let near=false,behind=false;
    for(const u of units){const v=project(u.x-p.x,u.y-p.y);v.y+=unitFoot(u);if(Math.abs(v.x)>=unitHalfW(u)+ew||v.y<=-eh||v.y-unitHeight(u)>=0)continue;if(v.y>0)behind=true;else near=true}
    if(behind)ghost.push(e);else if(near)front.push(e);
   }
@@ -158,7 +197,7 @@
 
  // ---- Picking and drag selection (screen based) ----
  unitHit=function(u,p){const v=project(p.x-u.x,p.y-u.y),f=unitFoot(u);return Math.abs(v.x)<=unitHalfW(u)&&v.y<=f+8&&v.y>=f-unitHeight(u)};
- enemyHit=function(e,p){const q=pathPoint(e.d),size=enemyVisualSize(e.kind),v=project(p.x-q.x,p.y-q.y);return Math.abs(v.x)<=size*.45&&v.y<=6&&v.y>=-size};
+ enemyHit=function(e,p){const q=pathPoint(e.d),size=Math.max(14,enemyVisualSize(e.kind)*BODY),v=project(p.x-q.x,p.y-q.y);return Math.abs(v.x)<=size*.45&&v.y<=4&&v.y>=-size};
  unitsInBox=function(a,b){
   const t=transform(),A=toScreen(a.x,a.y,t),B=toScreen(b.x,b.y,t),x1=Math.min(A.x,B.x),x2=Math.max(A.x,B.x),y1=Math.min(A.y,B.y),y2=Math.max(A.y,B.y);
   return units.filter(u=>{const f=toScreen(u.x,u.y,t);f.y+=unitFoot(u)*t.scale;const mid=f.y-unitHeight(u)*t.scale/2;return f.x>=x1&&f.x<=x2&&((f.y>=y1&&f.y<=y2)||(mid>=y1&&mid<=y2))});
@@ -169,5 +208,5 @@
   ctx.save();ctx.strokeStyle='#dcf9b3';ctx.fillStyle='rgba(220,249,179,.08)';ctx.lineWidth=1.5/t.scale;ctx.beginPath();corners.forEach((c,i)=>i?ctx.lineTo(c.x,c.y):ctx.moveTo(c.x,c.y));ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
  };
 
- root.ManmulBetaView={angle:45,squash:SQUASH,field,toScreen,screenToWorld,depth,project,upright,center:{x:CX,y:CY},hooks};
+ root.ManmulBetaView={angle:45,squash:SQUASH,field,toScreen,screenToWorld,depth,project,upright,center:{x:CX,y:CY},hooks,BODY,camera,zoomAt,resetCamera};
 })(globalThis);
