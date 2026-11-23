@@ -143,7 +143,7 @@ const profileCosmetics={
 const mapSkins={forest:'고대 유적 숲',snow:'설원 유적',desert:'사막 신전',lava:'용암 균열',sky:'천공 성역',mushroom:'달빛 버섯 숲',cherry:'벚꽃 정원',library:'침수된 도서관',clockwork:'태엽 공방',deepsea:'심해 유적',candy:'과자 왕국',stars:'별빛 관측소',amusement:'폐허가 된 놀이공원'};
 // 전장 스킨 해금: 숲만 처음부터 열려 있고, 네 스킨은 난이도 첫 클리어, 나머지는 조각 상자에서 얻는다.
 const mapSkinUnlock={forest:{free:true},snow:{clear:'easy'},desert:{clear:'normal'},lava:{clear:'hard'},sky:{clear:'extreme'}};
-function mapSkinUnlocked(id,firstClears=playerProfile?.firstClears||{}){if(!Object.hasOwn(mapSkins,id))return false;let rule=mapSkinUnlock[id];if(rule?.free)return true;if(rule?.clear)return firstClears[rule.clear]===true;return typeof boxCosmeticOwned==='function'&&boxCosmeticOwned('maps',id)}
+function mapSkinUnlocked(id,firstClears=playerProfile?.firstClears||{}){if(!Object.hasOwn(mapSkins,id))return false;if(globalThis.COMBINADE_REDESIGN)return true;let rule=mapSkinUnlock[id];if(rule?.free)return true;if(rule?.clear)return firstClears[rule.clear]===true;return typeof boxCosmeticOwned==='function'&&boxCosmeticOwned('maps',id)}
 function mapSkinLockText(id){let rule=mapSkinUnlock[id];if(rule?.clear)return `${({easy:'입문',normal:'일반',hard:'상급',extreme:'극한'})[rule.clear]} 첫 클리어`;return '조각 상자에서 획득'}
 const profileDefaults={name:'수호자',title:'rookie',icon:'basic',plate:'basic',mapSkin:'forest',firstClears:{}};
 const cosmeticSlots=[['title','titles'],['icon','icons'],['plate','plates']];

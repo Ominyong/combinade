@@ -126,12 +126,16 @@
   if(!groundImages.has(src))groundImages.set(src,load(src));return groundImages.get(src);
  }
  const arenaImage=()=>skinImage('arena',arenaSkins,list.legacyArena??!!list.arena);
- const backdropImage=()=>skinImage('backdrop',backdropSkins,list.legacyBackdrop??!!list.backdrop);
+ // All thirteen beta backdrops now live in their skin folders, including forest.
+ const backdropImage=()=>skinImage('backdrop',backdropSkins,false);
  // The backdrop fills the screen (cover) around the field centre and follows the intro camera, like the old skin backdrops.
  function backdropScreen(){
   const img=backdropImage();if(!ready(img))return false;
   const iw=img.naturalWidth,ih=img.naturalHeight,cam=introRemaining>0?introCameraState():{zoom:1,x:0,y:0},t=transform();
-  const s=Math.max(innerWidth/iw,innerHeight/ih)*1.06*cam.zoom,w=iw*s,h=ih*s,cx=(t.cx??innerWidth/2)+cam.x*t.scale,cy=(t.cy??innerHeight/2)+cam.y*t.scale;
+  // Always cover the screen: the intro camera starts zoomed out (0.75), and scaling the backdrop by that left the
+  // screen edges empty. It only drifts in a little (1.03 → 1.08) as the camera arrives, for depth.
+  const s=Math.max(innerWidth/iw,innerHeight/ih)*(1.03+.05*Math.min(1,Math.max(0,(cam.zoom-.75)/.25))),w=iw*s,h=ih*s;
+  const cx=Math.min(w/2,Math.max(innerWidth-w/2,(t.cx??innerWidth/2)+cam.x*t.scale*.3)),cy=Math.min(h/2,Math.max(innerHeight-h/2,(t.cy??innerHeight/2)+cam.y*t.scale*.3));
   ctx.save();ctx.fillStyle='#101d19';ctx.fillRect(0,0,innerWidth,innerHeight);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(img,cx-w/2,cy-h/2,w,h);ctx.restore();return true;
  }
  // arena.png is 1280×760 at the 1600×900 stage with the field centre at (640, 390); `scale` is the current world→screen scale.
@@ -319,5 +323,40 @@
    try{baseBasicFx()}finally{normalBasicProjectiles.splice(0,normalBasicProjectiles.length,...all)}
   }
  };
- root.ManmulBetaCartoon={unitImage,enemyViews,ready,GRADE_PX,ENEMY_BODY,attackStyle,transforms,TRANSFORM};
+ // ---- Portraits (unit panel, fusion cards, codex): the cartoon picture instead of the pixel sheet ----
+ // The art box (210 px tall, feet at y=236 of 256) is centred a little below the middle so the body fills the frame.
+ const cartoonPortrait=id=>`background-color:#202629;background-image:url('assets/cartoon/units/${id}.png');background-size:92% auto;background-position:center 62%;background-repeat:no-repeat;image-rendering:auto;color:transparent`;
+ const basePortrait=portraitStyle,baseBookPortrait=bookPortraitStyle,basePortraitContent=portraitContent;
+ portraitStyle=function(id){return unitIds.has(id)?cartoonPortrait(id):basePortrait(id)};
+ bookPortraitStyle=function(id){return unitIds.has(id)?cartoonPortrait(id):baseBookPortrait(id)};
+ portraitContent=function(id){return unitIds.has(id)?'':basePortraitContent(id)};
+
+ // Entrance clouds are viewport overlays, not world-space sprites. Keep the
+ // original entrance as a fallback if a network error leaves either bank absent.
+ const entrance={left:load('assets/cartoon/intro/clouds-left.png'),right:load('assets/cartoon/intro/clouds-right.png'),puffs:load('assets/cartoon/intro/cloud-puffs.png')};
+ const originalViewportFog=drawViewportFog,originalIntroAssetsSettled=introAssetsSettled;
+ introAssetsSettled=function(){return originalIntroAssetsSettled()&&Object.values(entrance).every(img=>img.complete)};
+ document.body?.classList.add('beta-cartoon-intro');
+ const cloudFilters={snow:'brightness(1.03)',desert:'sepia(.28) saturate(.8)',lava:'sepia(.35) saturate(1.1) hue-rotate(320deg) brightness(.75)',sky:'sepia(.12) hue-rotate(155deg)',mushroom:'sepia(.16) hue-rotate(205deg)',cherry:'sepia(.25) hue-rotate(290deg)',library:'sepia(.15) hue-rotate(100deg)',clockwork:'sepia(.3) saturate(.7)',deepsea:'sepia(.24) hue-rotate(145deg)',candy:'sepia(.2) hue-rotate(290deg)',stars:'sepia(.16) hue-rotate(195deg) brightness(.82)',amusement:'sepia(.14) saturate(.65) brightness(.86)'};
+ drawViewportFog=function(){
+  if(introRemaining<=0)return;
+  if(!ready(entrance.left)||!ready(entrance.right)){originalViewportFog();return}
+  const elapsed=Math.max(0,introTotal-introRemaining),p=Math.max(0,Math.min(1,(elapsed-.1)/.7));
+  const eased=p*p*(3-2*p),w=innerWidth,h=innerHeight,bank=w*1400/2600,shift=eased*w*.62;
+  if(p>=1)return;
+  ctx.save();ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  ctx.filter=cloudFilters[playerProfile.mapSkin]||'none';ctx.globalAlpha=1-eased*.72;
+  ctx.drawImage(entrance.left,-shift,0,bank,h);
+  ctx.drawImage(entrance.right,w-bank+shift,0,bank,h);
+  if(p>0&&ready(entrance.puffs)){
+   ctx.globalAlpha=Math.sin(Math.PI*p)*.85;
+   for(let i=0;i<6;i++){
+    const size=Math.min(w,h)*(.12+(i%3)*.025),direction=i%2?-1:1;
+    const x=w*(.2+i*.12)+direction*eased*w*.25-size/2,y=h*(.17+(i*37%67)/100)-eased*h*.12-size/2;
+    ctx.drawImage(entrance.puffs,i*384,0,384,384,x,y,size,size);
+   }
+  }
+  ctx.restore();
+ };
+ root.ManmulBetaCartoon={unitImage,enemyViews,ready,GRADE_PX,ENEMY_BODY,attackStyle,transforms,TRANSFORM,cartoonPortrait};
 })(globalThis);
