@@ -9,26 +9,16 @@
 //  - Reactions: bigger mark badges above the health bar, a big popup when a reaction fires, and the panel lists the
 //    allies that complete a reaction with this unit's mark.
 //  - Wide field (with the half-size bodies of manmul/beta-view.js): unit footprints are halved so 4× as many fit.
-//    Enemies come at half the rate: half as many per round, each with twice the health and gold, and the field holds
-//    half as many (limit 100 → 50), so a round keeps its total health, gold and leak tolerance.
 // Loaded after manmul/beta-cartoon.js.
 (function(root){
  const view=root.ManmulBetaView;
  if(!root.COMBINADE_REDESIGN||!view)return;
  const ink='#1a1a24',BODY=view.BODY||1;
 
- // ---- Wide field: half footprints, half the enemy rate ----
+ // ---- Wide field: half footprints ----
  for(const t of Object.values(types))if(typeof t.radius==='number')t.radius*=BODY;
  const baseFootprint=unitFootprint;unitFootprint=function(type){return baseFootprint(type)*BODY};
  const footY=u=>u.y+(unitFootY(u)-u.y)*BODY;// the grade base centre on the ground, at body size
- const RATE=.5,WAVE_KINDS=new Set(['normal','fast','armor','swarm']);
- for(const k of WAVE_KINDS){const spec=combatRules.enemyKinds[k];if(spec)spec.reward*=1/RATE}
- const baseStartWave=startWave;
- startWave=function(...a){const before=wave,r=baseStartWave.apply(this,a);if(wave!==before&&spawnLeft>1){spawnLeft=Math.max(1,Math.round(spawnLeft*RATE));spawnInterval=spawnDuration/spawnLeft}return r};
- const baseSpawnEnemy=spawnEnemy;
- spawnEnemy=function(kind,...a){const n=enemies.length,r=baseSpawnEnemy.call(this,kind,...a),e=enemies[n];if(e&&enemies.length>n&&WAVE_KINDS.has(kind)){e.hp/=RATE;e.max/=RATE}return r};
- const baseLimit=enemyLimit;enemyLimit=function(){return Math.round(baseLimit()*RATE)};
- if(root.ManmulSound?.enemyCount){const base=root.ManmulSound.enemyCount;root.ManmulSound.enemyCount=n=>base(n/RATE)}// alarms at the same share of the limit
 
  // ---- Special grade limits ----
  const LIMITS={'재앙':1,'역설':1,'신수':1,'천체':2};
@@ -101,11 +91,6 @@
   try{
    const box=document.querySelector('#selection');const sel=units.filter(u=>selected.includes(u.id));
    if(box&&sel.length===1&&box.querySelector('.unit-compact')&&!box.querySelector('.beta-hints')){const html=hintsHtml(sel[0].type);if(html)box.querySelector('.unit-compact').insertAdjacentHTML('afterend',html)}
-  }catch(e){}
-  try{
-   const limit=enemyLimit(),n=enemies.length,gauge=document.querySelector('#countGauge'),hud=document.querySelector('.hud-enemies'),label=document.querySelector('.hud-limit');
-   gauge?.style?.setProperty('width',Math.min(100,n/limit*100)+'%');if(hud)hud.dataset.level=n>=limit*.8?'danger':n>=limit*.6?'warn':'safe';
-   document.querySelector('#count')?.classList?.toggle('danger',n>=limit*.8);if(label&&label.textContent!==`/ ${limit}`)label.textContent=`/ ${limit}`;
   }catch(e){}
   return r;
  };
